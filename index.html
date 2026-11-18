@@ -222,8 +222,8 @@
   </div>
 
   <script>
-    // Адрес вашего сервера на порту 8080
-    const SERVER_URL = 'http://103.82.102.226:8080';
+    // Автоматически подключается к тому же адресу и порту, откуда открыт сайт
+    const SERVER_URL = window.location.origin;
     let socket = null;
 
     const fsOverlay = document.getElementById('fullscreen-overlay');
