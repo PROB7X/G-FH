@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GFT</title>
+  <script src="https://socket.io"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      user-select: none;
+    }
+
+    body {
+      background-color: #0b0e14;
+      color: #ffffff;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    /* Оверлеи (Полноэкранный режим и Ввод ника) */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 14, 20, 0.96);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      gap: 20px;
+      padding: 20px;
+      text-align: center;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    h1 {
+      font-size: 3rem;
+      letter-spacing: 4px;
+      color: #00f0ff;
+      text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
+    }
+
+    .btn {
+      padding: 16px 36px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-transform: uppercase;
+      color: #0b0e14;
+      background: linear-gradient(90deg, #00f0ff, #0080ff);
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+      transition: transform 0.15s;
+    }
+
+    .btn:active {
+      transform: scale(0.96);
+    }
+
+    input {
+      padding: 14px 20px;
+      font-size: 1.1rem;
+      border-radius: 8px;
+      border: 2px solid #00f0ff;
+      background: #151b26;
+      color: #fff;
+      outline: none;
+      text-align: center;
+      width: 280px;
+    }
+
+    /* Игровой интерфейс */
+    #game-screen {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 16px 24px;
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #151b26;
+      padding: 12px 20px;
+      border-radius: 12px;
+      border: 1px solid #242f42;
+    }
+
+    .player-info {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #00f0ff;
+    }
+
+    .currencies {
+      display: flex;
+      gap: 20px;
+      align-items: center;
+    }
+
+    .currency-box {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #0b0e14;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+
+    .crystals {
+      color: #38bdf8;
+      border: 1px solid #38bdf8;
+    }
+
+    .grits {
+      color: #fbbf24;
+      border: 1px solid #fbbf24;
+      box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
+    }
+
+    .main-area {
+      display: flex;
+      gap: 20px;
+      height: calc(100% - 80px);
+      margin-top: 16px;
+    }
+
+    .lobby-box {
+      flex: 2;
+      background: #151b26;
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid #242f42;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .players-panel {
+      flex: 1;
+      background: #151b26;
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid #242f42;
+      overflow-y: auto;
+    }
+
+    .players-panel h3 {
+      margin-bottom: 12px;
+      color: #94a3b8;
+      font-size: 0.95rem;
+      text-transform: uppercase;
+    }
+
+    .player-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 10px;
+      background: #0b0e14;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Экран 1: Требование полноэкранного режима -->
+  <div id="fullscreen-overlay" class="overlay">
+    <h1>GFT</h1>
+    <p>Для игры требуется полноэкранный горизонтальный режим</p>
+    <button id="btn-fullscreen" class="btn">На весь экран</button>
+  </div>
+
+  <!-- Экран 2: Ввод никнейма -->
+  <div id="nickname-overlay" class="overlay hidden">
+    <h2>ВВЕДИТЕ ВАШ НИКНЕЙМ</h2>
+    <input type="text" id="nickname-input" placeholder="Ваш ник..." maxlength="16">
+    <button id="btn-save-nick" class="btn">Войти в GFT</button>
+  </div>
+
+  <!-- Основной экран игры -->
+  <div id="game-screen" class="hidden">
+    <div class="top-bar">
+      <div class="player-info">Игрок: <span id="display-nick">---</span></div>
+      <div class="currencies">
+        <div class="currency-box crystals">💎 Кристаллы: <span id="val-crystals">0</span></div>
+        <div class="currency-box grits">🪙 Гритсы: <span id="val-grits">0</span></div>
+      </div>
+    </div>
+
+    <div class="main-area">
+      <div class="lobby-box">
+        <h2>СИСТЕМА GFT ГОТОВА</h2>
+        <p style="color: #94a3b8;">Обмен валюты: 50 Кристаллов = 1 Гритс</p>
+        <button id="btn-exchange" class="btn" style="font-size: 0.95rem; padding: 12px 24px;">Обменять на 1 Гритс</button>
+      </div>
+
+      <div class="players-panel">
+        <h3>Игроки онлайн (<span id="online-count">0</span>)</h3>
+        <div id="players-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Адрес вашего сервера на порту 8080
+    const SERVER_URL = 'http://103.82.102.226:8080';
+    let socket = null;
+
+    const fsOverlay = document.getElementById('fullscreen-overlay');
+    const nickOverlay = document.getElementById('nickname-overlay');
+    const gameScreen = document.getElementById('game-screen');
+    const btnFullscreen = document.getElementById('btn-fullscreen');
+    const btnSaveNick = document.getElementById('btn-save-nick');
+    const nickInput = document.getElementById('nickname-input');
+
+    // Проверка, находится ли браузер в полноэкранном режиме
+    function isFullscreen() {
+      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+    }
+
+    // Вход в полноэкранный режим + поворот на горизонталь
+    async function enterFullscreenAndLandscape() {
+      try {
+        const docEl = document.documentElement;
+        if (docEl.requestFullscreen) {
+          await docEl.requestFullscreen();
+        } else if (docEl.webkitRequestFullscreen) {
+          await docEl.webkitRequestFullscreen();
+        }
+
+        // Блокировка горизонтальной ориентации (работает на мобильных устройствах)
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape').catch(() => {});
+        }
+      } catch (err) {
+        console.warn('Ошибка полноэкранного режима:', err);
+      }
+      checkState();
+    }
+
+    // Отслеживание выхода из полноэкранного режима
+    document.addEventListener('fullscreenchange', checkState);
+    document.addEventListener('webkitfullscreenchange', checkState);
+
+    function checkState() {
+      if (!isFullscreen()) {
+        // Если игрок вышел из полного экрана — снова показываем кнопку
+        fsOverlay.classList.remove('hidden');
+        nickOverlay.classList.add('hidden');
+        gameScreen.classList.add('hidden');
+        return;
+      }
+
+      // Если в полном экране — скрываем оверлей кнопки
+      fsOverlay.classList.add('hidden');
+
+      const savedNick = localStorage.getItem('gft_nickname');
+      if (!savedNick) {
+        nickOverlay.classList.remove('hidden');
+        gameScreen.classList.add('hidden');
+      } else {
+        nickOverlay.classList.add('hidden');
+        gameScreen.classList.remove('hidden');
+        initGame(savedNick);
+      }
+    }
+
+    btnFullscreen.addEventListener('click', enterFullscreenAndLandscape);
+
+    btnSaveNick.addEventListener('click', () => {
+      const val = nickInput.value.trim();
+      if (val.length < 2) {
+        alert('Введите ник (минимум 2 символа)');
+        return;
+      }
+      localStorage.setItem('gft_nickname', val);
+      checkState();
+    });
+
+    // Подключение к серверу и обновление данных
+    function initGame(nickname) {
+      document.getElementById('display-nick').textContent = nickname;
+
+      if (socket) return; // Уже подключены
+
+      socket = io(SERVER_URL);
+
+      socket.on('connect', () => {
+        socket.emit('join_game', nickname);
+      });
+
+      socket.on('player_data', (data) => {
+        document.getElementById('val-crystals').textContent = data.crystals;
+        document.getElementById('val-grits').textContent = data.grits;
+      });
+
+      socket.on('players_list', (list) => {
+        document.getElementById('online-count').textContent = list.length;
+        const container = document.getElementById('players-list');
+        container.innerHTML = '';
+
+        list.forEach(p => {
+          const div = document.createElement('div');
+          div.className = 'player-item';
+          div.innerHTML = `
+            <span>${p.nickname}</span>
+            <span>💎 ${p.crystals} | 🪙 ${p.grits}</span>
+          `;
+          container.appendChild(div);
+        });
+      });
+
+      document.getElementById('btn-exchange').addEventListener('click', () => {
+        socket.emit('exchange_to_grits');
+      });
+    }
+  </script>
+</body>
+</html>
