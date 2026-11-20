@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Widget — Port 8080</title>
+    <script src="https://socket.io"></script>
+    <style>
+        body {
+            background: #121215;
+            color: #efeff1;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 16px;
+            margin: 0;
+        }
+        .card {
+            background: #18181b;
+            border: 1px solid #2c2c32;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 14px;
+        }
+        h2, h3 { margin-top: 0; font-size: 16px; }
+        .gold { color: #ffd700; font-weight: bold; }
+        input {
+            background: #26262c;
+            border: 1px solid #3a3a3d;
+            color: #fff;
+            padding: 8px 12px;
+            border-radius: 6px;
+        }
+        button {
+            background: #9147ff;
+            color: #fff;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        button.danger { background: #eb0400; padding: 4px 10px; font-size: 12px; }
+        .row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 0;
+            border-bottom: 1px solid #26262c;
+            font-size: 13px;
+        }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+<div id="authBox" class="card">
+    <h2>Админ-виджет (<span class="gold">HELM77ZX</span>)</h2>
+    <input type="password" id="adminPass" placeholder="Пароль из secret.json...">
+    <button onclick="loginAdmin()">Войти</button>
+    <p id="authErr" style="color: #ff4f4d; font-size: 12px; margin-top: 8px;"></p>
+</div>
+
+<div id="panelBox" class="hidden">
+    <div class="card">
+        <h3>Онлайн статистика (Порт 8080)</h3>
+        <div>Пользователей в сети: <b id="statUsers">0</b></div>
+        <div>Активных стримов: <b id="statStreams">0</b></div>
+    </div>
+
+    <div class="card">
+        <h3>Активные стримы</h3>
+        <div id="adminStreamsList">Нет стримов</div>
+    </div>
+
+    <div class="card">
+        <h3>Пользователи онлайн</h3>
+        <div id="adminUsersList">Никого нет</div>
+    </div>
+</div>
+
+<script>
+    const socket = io("http://103.82.102.226:8080");
+
+    function loginAdmin() {
+        const password = document.getElementById('adminPass').value;
+        socket.emit('admin:auth', { password }, (res) => {
+            if (res.ok) {
+                document.getElementById('authBox').classList.add('hidden');
+                document.getElementById('panelBox').classList.remove('hidden');
+            } else {
+                document.getElementById('authErr').textContent = res.error;
+            }
+        });
+    }
+
+    socket.on('admin:state', (state) => {
+        document.getElementById('statUsers').textContent = state.usersCount;
+        document.getElementById('statStreams').textContent = state.streams.length;
+
+        const sList = document.getElementById('adminStreamsList');
+        sList.innerHTML = state.streams.length ? state.streams.map(s => `
+            <div class="row">
+                <span><b>${s.title}</b> (${s.author})</span>
+                <button class="danger" onclick="stopStream('${s.id}')">Остановить</button>
+            </div>
+        `).join('') : 'Нет активных стримов';
+
+        const uList = document.getElementById('adminUsersList');
+        uList.innerHTML = state.users.length ? state.users.map(u => `
+            <div class="row">
+                <span class="${u.isAdmin ? 'gold' : ''}">${u.nick}</span>
+                ${!u.isAdmin ? `<button class="danger" onclick="banUser('${u.nick}')">Бан</button>` : '<span>Админ</span>'}
+            </div>
+        `).join('') : 'Пусто';
+    });
+
+    function stopStream(streamId) {
+        socket.emit('admin:stopStream', { streamId });
+    }
+
+    function banUser(targetNick) {
+        if (confirm(`Заблокировать ник ${targetNick}?`)) {
+            socket.emit('admin:banUser', { targetNick });
+        }
+    }
+</script>
+</body>
+</html>
