@@ -1,7 +1,7 @@
 {
-  "name": "gft-server",
+  "name": "g-fh-stream",
   "version": "1.0.0",
-  "description": "GFT Game Server",
+  "description": "Стриминговая платформа на порту 8080",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
@@ -9,6 +9,6 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.4"
   }
 }
