@@ -1,339 +1,574 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>GFT</title>
-  <script src="/socket.io/socket.io.js"></script>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: none;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>StreamHub — Live</title>
+    <script src="https://socket.io"></script>
+    <style>
+        :root {
+            --bg-main: #0e0e10;
+            --bg-card: #18181b;
+            --bg-nav: #1f1f23;
+            --accent: #9147ff;
+            --text-main: #efeff1;
+            --text-muted: #adadb8;
+            --gold: #ffd700;
+        }
 
-    body {
-      background-color: #0b0e14;
-      color: #ffffff;
-      width: 100vw;
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            user-select: none;
+        }
 
-    /* Оверлеи (Полноэкранный режим и Ввод ника) */
-    .overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(11, 14, 20, 0.96);
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-      gap: 20px;
-      padding: 20px;
-      text-align: center;
-    }
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    .hidden {
-      display: none !important;
-    }
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(14, 14, 16, 0.98);
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            text-align: center;
+        }
 
-    h1 {
-      font-size: 3rem;
-      letter-spacing: 4px;
-      color: #00f0ff;
-      text-shadow: 0 0 15px rgba(0, 240, 255, 0.5);
-    }
+        .hidden { display: none !important; }
 
-    .btn {
-      padding: 16px 36px;
-      font-size: 1.2rem;
-      font-weight: bold;
-      text-transform: uppercase;
-      color: #0b0e14;
-      background: linear-gradient(90deg, #00f0ff, #0080ff);
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-      transition: transform 0.15s;
-    }
+        .overlay h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #fff;
+        }
 
-    .btn:active {
-      transform: scale(0.96);
-    }
+        .overlay p {
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
 
-    input {
-      padding: 14px 20px;
-      font-size: 1.1rem;
-      border-radius: 8px;
-      border: 2px solid #00f0ff;
-      background: #151b26;
-      color: #fff;
-      outline: none;
-      text-align: center;
-      width: 280px;
-    }
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            padding: 12px 28px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
 
-    /* Игровой интерфейс */
-    #game-screen {
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 16px 24px;
-    }
+        .btn:active { transform: scale(0.97); }
+        .btn-danger { background: #eb0400; }
 
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: #151b26;
-      padding: 12px 20px;
-      border-radius: 12px;
-      border: 1px solid #242f42;
-    }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 100%;
+            max-width: 320px;
+        }
 
-    .player-info {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: #00f0ff;
-    }
+        input {
+            background: var(--bg-nav);
+            border: 1px solid #3a3a3d;
+            color: #fff;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 15px;
+            outline: none;
+        }
 
-    .currencies {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-    }
+        input:focus { border-color: var(--accent); }
 
-    .currency-box {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #0b0e14;
-      padding: 8px 14px;
-      border-radius: 8px;
-      font-weight: bold;
-    }
+        .gold-nick {
+            color: var(--gold) !important;
+            font-weight: 800;
+            text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+        }
 
-    .crystals {
-      color: #38bdf8;
-      border: 1px solid #38bdf8;
-    }
+        #app {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
 
-    .grits {
-      color: #fbbf24;
-      border: 1px solid #fbbf24;
-      box-shadow: 0 0 10px rgba(251, 191, 36, 0.2);
-    }
+        header {
+            height: 44px;
+            background: var(--bg-nav);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            border-bottom: 1px solid #2c2c32;
+            flex-shrink: 0;
+        }
 
-    .main-area {
-      display: flex;
-      gap: 20px;
-      height: calc(100% - 80px);
-      margin-top: 16px;
-    }
+        .logo {
+            font-weight: 800;
+            color: var(--accent);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 16px;
+        }
 
-    .lobby-box {
-      flex: 2;
-      background: #151b26;
-      border-radius: 12px;
-      padding: 20px;
-      border: 1px solid #242f42;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      gap: 16px;
-    }
+        .streams-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
 
-    .players-panel {
-      flex: 1;
-      background: #151b26;
-      border-radius: 12px;
-      padding: 16px;
-      border: 1px solid #242f42;
-      overflow-y: auto;
-    }
+        .stream-card {
+            background: var(--bg-card);
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            border: 1px solid #26262c;
+        }
 
-    .players-panel h3 {
-      margin-bottom: 12px;
-      color: #94a3b8;
-      font-size: 0.95rem;
-      text-transform: uppercase;
-    }
+        .stream-preview {
+            height: 110px;
+            background: linear-gradient(135deg, #2a1b3d, #18181b);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
 
-    .player-item {
-      display: flex;
-      justify-content: space-between;
-      padding: 8px 10px;
-      background: #0b0e14;
-      border-radius: 6px;
-      margin-bottom: 8px;
-      font-size: 0.9rem;
-    }
-  </style>
+        .live-badge {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            background: #eb0400;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .stream-info { padding: 8px 10px; }
+
+        .stream-title {
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .stream-author {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .watch-layout {
+            display: flex;
+            height: 100%;
+            gap: 12px;
+        }
+
+        .video-box {
+            flex: 2;
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .chat-box {
+            flex: 1;
+            background: var(--bg-card);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            min-width: 220px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 8px;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .chat-input-row {
+            display: flex;
+            padding: 6px;
+            gap: 4px;
+            border-top: 1px solid #2c2c32;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            padding: 6px 8px;
+            font-size: 12px;
+        }
+
+        nav {
+            height: 54px;
+            background: var(--bg-nav);
+            border-top: 1px solid #2c2c32;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-muted);
+            font-size: 11px;
+            gap: 3px;
+            cursor: pointer;
+            flex: 1;
+            height: 100%;
+        }
+
+        .nav-item svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+        }
+
+        .nav-item.active { color: var(--accent); }
+        .error-text { color: #ff4f4d; font-size: 13px; margin-top: 6px; }
+    </style>
 </head>
 <body>
 
-  <!-- Экран 1: Требование полноэкранного режима -->
-  <div id="fullscreen-overlay" class="overlay">
-    <h1>GFT</h1>
-    <p>Для игры требуется полноэкранный горизонтальный режим</p>
-    <button id="btn-fullscreen" class="btn">На весь экран</button>
-  </div>
+<div id="fullscreenOverlay" class="overlay">
+    <h1>ТРЕБУЕТСЯ ПОЛНЫЙ ЭКРАН</h1>
+    <p>Платформа работает только в горизонтальном полноэкранном режиме.</p>
+    <button class="btn" onclick="enterFullScreen()">На весь экран</button>
+</div>
 
-  <!-- Экран 2: Ввод никнейма -->
-  <div id="nickname-overlay" class="overlay hidden">
-    <h2>ВВЕДИТЕ ВАШ НИКНЕЙМ</h2>
-    <input type="text" id="nickname-input" placeholder="Ваш ник..." maxlength="16">
-    <button id="btn-save-nick" class="btn">Войти в GFT</button>
-  </div>
-
-  <!-- Основной экран игры -->
-  <div id="game-screen" class="hidden">
-    <div class="top-bar">
-      <div class="player-info">Игрок: <span id="display-nick">---</span></div>
-      <div class="currencies">
-        <div class="currency-box crystals">💎 Кристаллы: <span id="val-crystals">0</span></div>
-        <div class="currency-box grits">🪙 Гритсы: <span id="val-grits">0</span></div>
-      </div>
+<div id="loginOverlay" class="overlay hidden">
+    <h1>ВХОД НА ПЛАТФОРМУ</h1>
+    <p>Введите ваш никнейм для просмотра и запуска трансляций</p>
+    <div class="input-group">
+        <input type="text" id="nickInput" placeholder="Ваш ник..." maxlength="20">
+        <input type="password" id="passInput" class="hidden" placeholder="Пароль для HELM77ZX...">
+        <button class="btn" onclick="submitLogin()">Продолжить</button>
+        <div id="loginError" class="error-text"></div>
     </div>
+</div>
+<div id="app">
+    <header>
+        <div class="logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4.265 3 3 6.236v13.223h4.502V21l2.531.85 2.392-2.391h3.658l4.923-4.924V3H4.265zm15.052 10.691-2.813 2.814h-4.502l-2.391 2.391v-2.391H5.813V4.688h13.504v9.003z"/></svg>
+            StreamHub
+        </div>
+        <div id="headerUserNick" style="font-size: 14px; font-weight: 600;"></div>
+    </header>
 
-    <div class="main-area">
-      <div class="lobby-box">
-        <h2>СИСТЕМА GFT ГОТОВА</h2>
-        <p style="color: #94a3b8;">Обмен валюты: 50 Кристаллов = 1 Гритс</p>
-        <button id="btn-exchange" class="btn" style="font-size: 0.95rem; padding: 12px 24px;">Обменять на 1 Гритс</button>
-      </div>
+    <main id="mainContent">
+        <section id="tab-home">
+            <h3 style="margin-bottom: 10px; font-size: 16px;">Активные трансляции</h3>
+            <div id="streamsList" class="streams-grid"></div>
+        </section>
 
-      <div class="players-panel">
-        <h3>Игроки онлайн (<span id="online-count">0</span>)</h3>
-        <div id="players-list"></div>
-      </div>
-    </div>
-  </div>
+        <section id="tab-search" class="hidden">
+            <input type="text" id="searchInput" placeholder="Поиск по названию или автору..." style="width: 100%; margin-bottom: 12px;" oninput="renderStreams()">
+            <div id="searchResults" class="streams-grid"></div>
+        </section>
 
-  <script>
-    // Автоматически подключается к тому же адресу и порту, откуда открыт сайт
-    const SERVER_URL = window.location.origin;
-    let socket = null;
+        <section id="tab-stream" class="hidden">
+            <div style="max-width: 400px; margin: 0 auto; background: var(--bg-card); padding: 16px; border-radius: 8px;">
+                <h3 style="margin-bottom: 10px;">Панель стримера</h3>
+                <input type="text" id="streamTitleInput" placeholder="Название вашей трансляции..." style="width: 100%; margin-bottom: 10px;">
+                <div style="display: flex; gap: 10px;">
+                    <button id="btnStartStream" class="btn" style="flex: 1;" onclick="startMyStream()">Начать эфир</button>
+                    <button id="btnStopStream" class="btn btn-danger hidden" style="flex: 1;" onclick="stopMyStream()">Завершить</button>
+                </div>
+                <p id="myStreamStatus" style="margin-top: 10px; font-size: 13px; color: var(--text-muted);"></p>
+            </div>
+        </section>
 
-    const fsOverlay = document.getElementById('fullscreen-overlay');
-    const nickOverlay = document.getElementById('nickname-overlay');
-    const gameScreen = document.getElementById('game-screen');
-    const btnFullscreen = document.getElementById('btn-fullscreen');
-    const btnSaveNick = document.getElementById('btn-save-nick');
-    const nickInput = document.getElementById('nickname-input');
+        <section id="tab-profile" class="hidden">
+            <div style="max-width: 400px; margin: 0 auto; background: var(--bg-card); padding: 16px; border-radius: 8px;">
+                <h3 style="margin-bottom: 8px;">Ваш профиль</h3>
+                <p style="font-size: 14px; margin-bottom: 12px;">Ник: <span id="profileNick"></span></p>
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">Статус: <span id="profileRole">Зритель / Стример</span></p>
+                <button class="btn btn-danger" onclick="logout()">Сменить аккаунт</button>
+            </div>
+        </section>
 
-    // Проверка, находится ли браузер в полноэкранном режиме
-    function isFullscreen() {
-      return !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
-    }
+        <section id="tab-watch" class="hidden" style="height: 100%;">
+            <div class="watch-layout">
+                <div class="video-box">
+                    <button onclick="switchTab('home')" style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.6); color: #fff; border: 1px solid #444; padding: 4px 10px; border-radius: 4px; cursor: pointer;">← Назад</button>
+                    <div class="live-badge" style="top: 10px; right: 10px; left: auto;">В ЭФИРЕ</div>
+                    <h2 id="watchTitle" style="margin-bottom: 6px;">Название стрима</h2>
+                    <p id="watchAuthor" style="color: var(--text-muted); font-size: 14px;"></p>
+                </div>
+                <div class="chat-box">
+                    <div style="padding: 8px; border-bottom: 1px solid #2c2c32; font-size: 12px; font-weight: 700;">ЧАТ ТРАНСЛЯЦИИ</div>
+                    <div id="chatMessages" class="chat-messages"></div>
+                    <div class="chat-input-row">
+                        <input type="text" id="chatInput" placeholder="Написать..." onkeydown="if(event.key==='Enter') sendChat()">
+                        <button class="btn" style="padding: 6px 12px; font-size: 12px;" onclick="sendChat()">OK</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
-    // Вход в полноэкранный режим + поворот на горизонталь
-    async function enterFullscreenAndLandscape() {
-      try {
+    <nav>
+        <div class="nav-item active" data-tab="home" onclick="switchTab('home')">
+            <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+            <span>Главная</span>
+        </div>
+        <div class="nav-item" data-tab="search" onclick="switchTab('search')">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <span>Поиск</span>
+        </div>
+        <div class="nav-item" data-tab="stream" onclick="switchTab('stream')">
+            <svg viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4z"/></svg>
+            <span>Свой стрим</span>
+        </div>
+        <div class="nav-item" data-tab="profile" onclick="switchTab('profile')">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            <span>Профиль</span>
+        </div>
+    </nav>
+</div>
+<script>
+    const SERVER_URL = "http://103.82.102.226:8080";
+    const socket = io(SERVER_URL);
+
+    let currentUser = null;
+    let allStreams = [];
+    let currentWatchStreamId = null;
+
+    async function enterFullScreen() {
         const docEl = document.documentElement;
-        if (docEl.requestFullscreen) {
-          await docEl.requestFullscreen();
-        } else if (docEl.webkitRequestFullscreen) {
-          await docEl.webkitRequestFullscreen();
-        }
+        try {
+            if (docEl.requestFullscreen) {
+                await docEl.requestFullscreen();
+            } else if (docEl.webkitRequestFullscreen) {
+                await docEl.webkitRequestFullscreen();
+            }
 
-        // Блокировка горизонтальной ориентации (работает на мобильных устройствах)
-        if (screen.orientation && screen.orientation.lock) {
-          await screen.orientation.lock('landscape').catch(() => {});
+            if (screen.orientation && screen.orientation.lock) {
+                await screen.orientation.lock("landscape").catch(() => {});
+            }
+        } catch (e) {
+            console.warn("Fullscreen error:", e);
         }
-      } catch (err) {
-        console.warn('Ошибка полноэкранного режима:', err);
-      }
-      checkState();
+        checkFullscreenState();
     }
 
-    // Отслеживание выхода из полноэкранного режима
-    document.addEventListener('fullscreenchange', checkState);
-    document.addEventListener('webkitfullscreenchange', checkState);
+    function checkFullscreenState() {
+        const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+        const fsOverlay = document.getElementById('fullscreenOverlay');
+        const loginOverlay = document.getElementById('loginOverlay');
 
-    function checkState() {
-      if (!isFullscreen()) {
-        // Если игрок вышел из полного экрана — снова показываем кнопку
-        fsOverlay.classList.remove('hidden');
-        nickOverlay.classList.add('hidden');
-        gameScreen.classList.add('hidden');
-        return;
-      }
-
-      // Если в полном экране — скрываем оверлей кнопки
-      fsOverlay.classList.add('hidden');
-
-      const savedNick = localStorage.getItem('gft_nickname');
-      if (!savedNick) {
-        nickOverlay.classList.remove('hidden');
-        gameScreen.classList.add('hidden');
-      } else {
-        nickOverlay.classList.add('hidden');
-        gameScreen.classList.remove('hidden');
-        initGame(savedNick);
-      }
+        if (!isFs) {
+            fsOverlay.classList.remove('hidden');
+            loginOverlay.classList.add('hidden');
+        } else {
+            fsOverlay.classList.add('hidden');
+            if (!currentUser) {
+                loginOverlay.classList.remove('hidden');
+            }
+        }
     }
 
-    btnFullscreen.addEventListener('click', enterFullscreenAndLandscape);
+    document.addEventListener('fullscreenchange', checkFullscreenState);
+    document.addEventListener('webkitfullscreenchange', checkFullscreenState);
 
-    btnSaveNick.addEventListener('click', () => {
-      const val = nickInput.value.trim();
-      if (val.length < 2) {
-        alert('Введите ник (минимум 2 символа)');
-        return;
-      }
-      localStorage.setItem('gft_nickname', val);
-      checkState();
+    async function submitLogin() {
+        const nick = document.getElementById('nickInput').value.trim();
+        const password = document.getElementById('passInput').value;
+        const errEl = document.getElementById('loginError');
+        errEl.textContent = "";
+
+        try {
+            const res = await fetch(`${SERVER_URL}/api/auth`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nick, password })
+            });
+            const data = await res.json();
+
+            if (!data.ok) {
+                if (data.requirePassword) {
+                    document.getElementById('passInput').classList.remove('hidden');
+                }
+                errEl.textContent = data.error || "Ошибка входа";
+                return;
+            }
+
+            currentUser = { nick: data.nick, isAdmin: data.isAdmin };
+            document.getElementById('loginOverlay').classList.add('hidden');
+            applyUserUI();
+            socket.emit('user:register', currentUser);
+        } catch (e) {
+            errEl.textContent = "Нет связи с сервером (порт 8080)";
+        }
+    }
+
+    function applyUserUI() {
+        const headerNick = document.getElementById('headerUserNick');
+        const profileNick = document.getElementById('profileNick');
+        const profileRole = document.getElementById('profileRole');
+
+        headerNick.textContent = currentUser.nick;
+        profileNick.textContent = currentUser.nick;
+
+        if (currentUser.isAdmin || currentUser.nick.toUpperCase() === 'HELM77ZX') {
+            headerNick.classList.add('gold-nick');
+            profileNick.classList.add('gold-nick');
+            profileRole.textContent = "Администратор (Золотой статус)";
+        } else {
+            headerNick.classList.remove('gold-nick');
+            profileNick.classList.remove('gold-nick');
+            profileRole.textContent = "Пользователь";
+        }
+    }
+
+    function logout() {
+        currentUser = null;
+        document.getElementById('passInput').classList.add('hidden');
+        document.getElementById('passInput').value = "";
+        document.getElementById('loginOverlay').classList.remove('hidden');
+    }
+
+    function switchTab(tabName) {
+        document.querySelectorAll('main > section').forEach(s => s.classList.add('hidden'));
+        document.getElementById(`tab-${tabName}`).classList.remove('hidden');
+
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.classList.toggle('active', item.dataset.tab === tabName);
+        });
+    }
+
+    socket.on('streams:update', (streams) => {
+        allStreams = streams;
+        renderStreams();
     });
 
-    // Подключение к серверу и обновление данных
-    function initGame(nickname) {
-      document.getElementById('display-nick').textContent = nickname;
+    function renderStreams() {
+        const homeGrid = document.getElementById('streamsList');
+        const searchGrid = document.getElementById('searchResults');
+        const query = (document.getElementById('searchInput')?.value || "").toLowerCase();
 
-      if (socket) return; // Уже подключены
+        const createCard = (s) => {
+            const goldClass = (s.isAdmin || s.author.toUpperCase() === 'HELM77ZX') ? 'gold-nick' : '';
+            return `
+                <div class="stream-card" onclick="openStream('${s.id}')">
+                    <div class="stream-preview">
+                        <span class="live-badge">LIVE</span>
+                        <span>Нажмите для просмотра</span>
+                    </div>
+                    <div class="stream-info">
+                        <div class="stream-title">${escapeHtml(s.title)}</div>
+                        <div class="stream-author ${goldClass}">${escapeHtml(s.author)}</div>
+                    </div>
+                </div>
+            `;
+        };
 
-      socket = io(SERVER_URL);
+        homeGrid.innerHTML = allStreams.length
+            ? allStreams.map(createCard).join('')
+            : '<p style="color: var(--text-muted); font-size: 13px;">Сейчас нет активных стримов. Запустите первый!</p>';
 
-      socket.on('connect', () => {
-        socket.emit('join_game', nickname);
-      });
-
-      socket.on('player_data', (data) => {
-        document.getElementById('val-crystals').textContent = data.crystals;
-        document.getElementById('val-grits').textContent = data.grits;
-      });
-
-      socket.on('players_list', (list) => {
-        document.getElementById('online-count').textContent = list.length;
-        const container = document.getElementById('players-list');
-        container.innerHTML = '';
-
-        list.forEach(p => {
-          const div = document.createElement('div');
-          div.className = 'player-item';
-          div.innerHTML = `
-            <span>${p.nickname}</span>
-            <span>💎 ${p.crystals} | 🪙 ${p.grits}</span>
-          `;
-          container.appendChild(div);
-        });
-      });
-
-      document.getElementById('btn-exchange').addEventListener('click', () => {
-        socket.emit('exchange_to_grits');
-      });
+        const filtered = allStreams.filter(s =>
+            s.title.toLowerCase().includes(query) || s.author.toLowerCase().includes(query)
+        );
+        searchGrid.innerHTML = filtered.map(createCard).join('');
     }
-  </script>
+
+    function openStream(streamId) {
+        const stream = allStreams.find(s => s.id === streamId);
+        if (!stream) return;
+
+        currentWatchStreamId = streamId;
+        document.getElementById('watchTitle').textContent = stream.title;
+        const authorEl = document.getElementById('watchAuthor');
+        authorEl.textContent = `Стример: ${stream.author}`;
+        authorEl.className = (stream.isAdmin || stream.author.toUpperCase() === 'HELM77ZX') ? 'gold-nick' : '';
+
+        document.getElementById('chatMessages').innerHTML = '';
+        switchTab('watch');
+    }
+
+    function startMyStream() {
+        const title = document.getElementById('streamTitleInput').value.trim();
+        socket.emit('stream:start', { title });
+        document.getElementById('btnStartStream').classList.add('hidden');
+        document.getElementById('btnStopStream').classList.remove('hidden');
+        document.getElementById('myStreamStatus').textContent = "Вы в прямом эфире!";
+    }
+
+    function stopMyStream() {
+        socket.emit('stream:stop');
+        document.getElementById('btnStartStream').classList.remove('hidden');
+        document.getElementById('btnStopStream').classList.add('hidden');
+        document.getElementById('myStreamStatus').textContent = "Эфир завершен.";
+    }
+
+    function sendChat() {
+        const input = document.getElementById('chatInput');
+        if (!input.value.trim() || !currentWatchStreamId) return;
+        socket.emit('chat:message', { streamId: currentWatchStreamId, text: input.value });
+        input.value = '';
+    }
+
+    socket.on('chat:new', (msg) => {
+        if (msg.streamId !== currentWatchStreamId) return;
+        const box = document.getElementById('chatMessages');
+        const goldClass = (msg.isAdmin || msg.author.toUpperCase() === 'HELM77ZX') ? 'gold-nick' : '';
+        box.innerHTML += `<div><b class="${goldClass}">${escapeHtml(msg.author)}:</b> ${escapeHtml(msg.text)}</div>`;
+        box.scrollTop = box.scrollHeight;
+    });
+
+    socket.on('force:stopStream', (reason) => {
+        stopMyStream();
+        alert(reason);
+    });
+
+    socket.on('force:ban', (reason) => {
+        alert(reason);
+        location.reload();
+    });
+
+    function escapeHtml(str) {
+        return str.replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+    }
+</script>
 </body>
 </html>
