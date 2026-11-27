@@ -11,26 +11,46 @@
     canvas { display: block; image-rendering: pixelated; }
     #fs-overlay, .modal { position: fixed; inset: 0; background: rgba(10,15,25,0.95); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
     #fs-overlay { z-index: 10000; }
-    #fs-close { position: absolute; top: 15px; right: 20px; font-size: 28px; color: #aaa; background: none; border: none; cursor: pointer; }
-    .btn { background: #2ecc71; color: #000; border: 2px solid #27ae60; padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 10px; }
+    #fs-close { position: absolute; top: 15px; right: 20px; color: #aaa; background: none; border: none; cursor: pointer; }
+    .btn { background: #2ecc71; color: #000; border: 2px solid #27ae60; padding: 10px 20px; font-size: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
     .hidden { display: none !important; }
     input { padding: 10px; font-size: 16px; margin: 6px 0; background: #222; color: #fff; border: 2px solid #555; width: 250px; text-align: center; }
+    
+    /* Верхняя панель слева (Выход с сервера) */
+    #top-left-bar { position: fixed; top: 10px; left: 10px; z-index: 150; }
+    .leave-btn { background: rgba(231, 76, 60, 0.85); color: #fff; border: 2px solid #c0392b; padding: 7px 12px; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+
+    /* Верхняя панель справа (HUD) */
     #hud { position: fixed; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.75); padding: 8px; border: 2px solid #444; border-radius: 6px; font-size: 12px; text-align: right; }
-    .s-btn { background: #3498db; color: #fff; border: none; padding: 5px 8px; margin-top: 4px; cursor: pointer; border-radius: 4px; }
+    .s-btn { background: #3498db; color: #fff; border: none; padding: 6px 10px; margin-top: 4px; cursor: pointer; border-radius: 4px; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 12px; }
+
+    /* Мобильное управление */
     #mobile-controls { position: fixed; bottom: 15px; left: 15px; right: 15px; z-index: 100; display: flex; justify-content: space-between; pointer-events: none; }
-    .grp { display: flex; gap: 10px; pointer-events: auto; }
-    .m-btn { width: 58px; height: 58px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 10px; color: #fff; font-size: 18px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-    .win { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 88%; max-width: 560px; height: 75%; background: #1e272e; border: 3px solid #808e9b; z-index: 2000; padding: 15px; overflow-y: auto; }
+    .grp { display: flex; gap: 10px; pointer-events: auto; align-items: flex-end; }
+    .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 6px; }
+    .m-btn { width: 56px; height: 56px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 10px; color: #fff; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
+    .m-btn:active { background: rgba(255,255,255,0.45); }
+
+    /* Игровые окна (Инвентарь, Сундук, Уведомления) */
+    .win { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 88%; max-width: 560px; height: 75%; background: #1e272e; border: 3px solid #808e9b; z-index: 2000; padding: 15px; overflow-y: auto; border-radius: 8px; }
     .card { background: #2f3640; padding: 8px; margin: 5px 0; border-left: 4px solid #00a8ff; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+    
+    /* Внутриигровой тост и модалка подтверждения вместо alert/confirm */
+    #game-toast { position: fixed; top: 55px; left: 50%; transform: translateX(-50%); background: rgba(15, 20, 30, 0.92); border: 2px solid #2ecc71; color: #fff; padding: 10px 18px; border-radius: 6px; z-index: 8500; font-size: 13px; text-align: center; pointer-events: none; transition: opacity 0.2s; }
+    #custom-confirm { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e272e; border: 3px solid gold; padding: 20px; border-radius: 8px; z-index: 8800; text-align: center; width: 320px; }
   </style>
 </head>
 <body>
+
 <div id="fs-overlay">
-  <button id="fs-close" onclick="closeFs()">✖</button>
+  <button id="fs-close" onclick="closeFs()">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+  </button>
   <h2>Разверните игру на весь экран</h2>
-  <p style="color:#aaa;">Экран перевернется в горизонтальный режим</p>
+  <p style="color:#aaa; margin-top:6px;">Экран перевернется в горизонтальный режим</p>
   <button class="btn" onclick="openFs()">НА ВЕСЬ ЭКРАН</button>
 </div>
+
 <div id="login-modal" class="modal">
   <h2>PIXEL FISHING MMO</h2>
   <input id="nick-inp" placeholder="Ваш ник..." maxlength="16">
@@ -38,27 +58,74 @@
   <button class="btn" onclick="doLogin()">ВОЙТИ</button>
   <p id="err-txt" style="color:#ff4757; margin-top:8px;"></p>
 </div>
+
 <div id="srv-modal" class="modal hidden">
   <h2>ВЫБОР СЕРВЕРА</h2>
+  <p style="color:#aaa; font-size:12px; margin-bottom:8px;">Максимум 20 игроков на созданных серверах</p>
   <div id="srv-list"></div>
   <input id="new-srv-inp" placeholder="Имя своего сервера">
   <button class="btn" onclick="startAds()">Создать сервер (2 рекламы)</button>
 </div>
+
 <div id="ad-modal" class="modal hidden">
   <h3 id="ad-lbl">Реклама 1 из 2</h3>
   <video id="ad-vid" width="320" height="180" playsinline style="border:2px solid #fff; margin:10px 0;"><source src="/1.mp4" type="video/mp4"></video>
 </div>
+
+<!-- Кнопка выхода с сервера сверху слева -->
+<div id="top-left-bar" class="hidden">
+  <button class="leave-btn" onclick="leaveServer()">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
+    <span>Выйти с сервера</span>
+  </button>
+</div>
+
 <div id="hud" class="hidden">
   <div id="hud-info"></div>
-  <button class="s-btn" onclick="openWin('inv-win')">🎒 Инвентарь / Удочка</button>
-  <button class="s-btn" style="background:#e84118;" onclick="toggleLoc()">🔥 Лава (100+ лвл)</button>
+  <button class="s-btn" onclick="openWin('inv-win')">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
+    <span>Инвентарь / Удочка</span>
+  </button>
+  <button class="s-btn" style="background:#e84118;" onclick="toggleLoc()">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 0-6 5.686-6 11a6 6 0 0 0 12 0c0-5.314-6-11-6-11zm0 15a2.5 2.5 0 0 1-2.5-2.5c0-1.9 2.5-4.5 2.5-4.5s2.5 2.6 2.5 4.5A2.5 2.5 0 0 1 12 17z"/></svg>
+    <span>Лава (100+ лвл)</span>
+  </button>
 </div>
+
 <div id="mobile-controls" class="hidden">
-  <div class="grp"><div class="m-btn" id="b-left">◀</div><div class="m-btn" id="b-right">▶</div></div>
-  <div class="grp"><div class="m-btn" id="b-use">📦</div><div class="m-btn" id="b-act" style="width:90px; background:rgba(46,204,113,0.4);">ЗАБРОС</div></div>
+  <div class="grp">
+    <div class="dpad">
+      <div></div>
+      <div class="m-btn" id="b-up" style="width:52px; height:52px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h16z"/></svg>
+      </div>
+      <div></div>
+      <div class="m-btn" id="b-left" style="width:52px; height:52px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 12l8-8v16z"/></svg>
+      </div>
+      <div class="m-btn" id="b-down" style="width:52px; height:52px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-8H4z"/></svg>
+      </div>
+      <div class="m-btn" id="b-right" style="width:52px; height:52px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12l-8 8V4z"/></svg>
+      </div>
+    </div>
+  </div>
+  <div class="grp">
+    <div class="m-btn" id="b-use">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M10 10v4h4v-4"/></svg>
+    </div>
+    <div class="m-btn" id="b-act" style="width:105px; background:rgba(46,204,113,0.4);">ЗАБРОС</div>
+  </div>
 </div>
+
 <div id="inv-win" class="win hidden">
-  <div style="display:flex; justify-content:space-between;"><h3>🎒 Снасти и Улов</h3><button onclick="openWin('inv-win')" style="color:red; background:none; border:none; font-size:20px;">✖</button></div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h3>Снасти и Улов</h3>
+    <button onclick="openWin('inv-win')" style="background:none; border:none; cursor:pointer;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
   <p id="rod-txt" style="font-size:12px; color:#2ecc71; margin:8px 0;"></p>
   <div style="display:flex; gap:4px; flex-wrap:wrap; margin-bottom:10px;">
     <button class="s-btn" onclick="upg('base')">+Основание (50 XP)</button><button class="s-btn" onclick="upg('line')">+Леска (50 XP)</button>
@@ -66,13 +133,51 @@
   </div>
   <div id="inv-list"></div>
 </div>
+
 <div id="end-win" class="win hidden">
-  <div style="display:flex; justify-content:space-between;"><h3>🌌 Эндер-Сундук</h3><button onclick="openWin('end-win')" style="color:red; background:none; border:none; font-size:20px;">✖</button></div>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h3>Эндер-Сундук</h3>
+    <button onclick="openWin('end-win')" style="background:none; border:none; cursor:pointer;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg>
+    </button>
+  </div>
   <div id="end-list"></div>
 </div>
+
+<!-- Внутриигровые уведомления (вместо браузерных alert/confirm) -->
+<div id="game-toast" class="hidden"></div>
+<div id="custom-confirm" class="hidden">
+  <p id="confirm-text" style="margin-bottom:15px; font-size:14px;"></p>
+  <div style="display:flex; justify-content:center; gap:10px;">
+    <button class="btn" id="confirm-yes" style="margin:0; padding:8px 18px;">Да</button>
+    <button class="btn" id="confirm-no" style="margin:0; padding:8px 18px; background:#e74c3c; border-color:#c0392b; color:#fff;">Нет</button>
+  </div>
+</div>
+
 <canvas id="c"></canvas>
 <script>
 const socket = io();
+
+// Внутриигровое уведомление (не выкидывает из полноэкранного режима)
+let toastTimer = null;
+function notify(msg, color = "#2ecc71") {
+  const el = document.getElementById('game-toast');
+  el.innerText = msg;
+  el.style.borderColor = color;
+  el.classList.remove('hidden');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.add('hidden'), 3500);
+}
+
+// Внутриигровое окно подтверждения (для трейдов)
+function askConfirm(msg, onYes) {
+  const box = document.getElementById('custom-confirm');
+  document.getElementById('confirm-text').innerText = msg;
+  box.classList.remove('hidden');
+  document.getElementById('confirm-yes').onclick = () => { box.classList.add('hidden'); onYes(); };
+  document.getElementById('confirm-no').onclick = () => { box.classList.add('hidden'); };
+}
+
 let fsClosed = false;
 function openFs() {
   const el = document.documentElement;
@@ -81,10 +186,12 @@ function openFs() {
   document.getElementById('fs-overlay').classList.add('hidden');
 }
 function closeFs() { fsClosed = true; document.getElementById('fs-overlay').classList.add('hidden'); }
-document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && !fsClosed) document.getElementById('fs-overlay').classList.remove('hidden'); });
+document.addEventListener('fullscreenchange', () => {
+  if (!document.fullscreenElement && !fsClosed) document.getElementById('fs-overlay').classList.remove('hidden');
+});
 
 let prof = { nick: "Рыбак", isOwner: false, xp: 0, level: 1, rod: { base:1, line:1, reel:1, lure:1, bobber:1 }, inventory: [], enderChest: [] };
-let ownerToken = "", px = 350, loc = 'water', others = {};
+let ownerToken = "", px = 350, loc = 'water', others = {}, inRoom = false;
 
 document.getElementById('nick-inp').addEventListener('input', e => {
   document.getElementById('pass-inp').classList.toggle('hidden', e.target.value.trim() !== "HELM77ZX");
@@ -101,8 +208,10 @@ async function doLogin() {
     const data = await res.json();
     if (!data.success) return document.getElementById('err-txt').innerText = "Неверный пароль!";
     ownerToken = data.token; prof.isOwner = true;
-    const w = await (await fetch('/widget.html?token=' + ownerToken)).text();
-    document.body.insertAdjacentHTML('beforeend', w);
+    if (!document.getElementById('owner-widget')) {
+      const w = await (await fetch('/widget.html?token=' + ownerToken)).text();
+      document.body.insertAdjacentHTML('beforeend', w);
+    }
   }
   prof.nick = nick;
   document.getElementById('login-modal').classList.add('hidden');
@@ -110,20 +219,27 @@ async function doLogin() {
   socket.emit('getRooms');
 }
 
-window.ownerAddXp = (v) => { prof.xp += v; save(); };
+window.ownerAddXp = (v) => { prof.xp += v; save(); notify(`Начислено +${v} XP`, "gold"); };
 window.ownerSendMsg = () => socket.emit('adminCmd', { token: ownerToken, type: 'msg', val: document.getElementById('owner-msg-inp').value });
-socket.on('globalMsg', m => alert("👑 [OWNER]: " + m));
+socket.on('globalMsg', m => notify(`[OWNER]: ${m}`, "gold"));
 
 socket.on('roomsList', list => {
   const box = document.getElementById('srv-list'); box.innerHTML = '';
   list.forEach(r => {
-    const b = document.createElement('button'); b.className = 'btn'; b.style.display = 'block'; b.style.margin = '5px auto';
-    b.innerText = `🌐 ${r}`; b.onclick = () => enterRoom(r); box.appendChild(b);
+    const b = document.createElement('button'); b.className = 'btn'; b.style.display = 'flex'; b.style.margin = '6px auto'; b.style.width = '280px';
+    b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      <span>${r.name} (${r.count}/${r.max})</span>`;
+    b.onclick = () => enterRoom(r.name);
+    box.appendChild(b);
   });
 });
 
 let adStep = 0;
-function startAds() { const n = document.getElementById('new-srv-inp').value.trim(); if (!n) return alert("Введите название!"); adStep = 0; runAd(n); }
+function startAds() {
+  const n = document.getElementById('new-srv-inp').value.trim();
+  if (!n) return notify("Введите название сервера!", "#ff4757");
+  adStep = 0; runAd(n);
+}
 function runAd(name) {
   const m = document.getElementById('ad-modal'), v = document.getElementById('ad-vid');
   document.getElementById('ad-lbl').innerText = `Реклама ${adStep + 1} из 2`; m.classList.remove('hidden'); v.currentTime = 0;
@@ -133,11 +249,32 @@ function runAd(name) {
 function finishAdStep(m, name) { if (++adStep < 2) runAd(name); else { m.classList.add('hidden'); socket.emit('createRoom', name); enterRoom(name); } }
 
 function enterRoom(roomName) {
+  socket.emit('joinRoom', { roomName, nick: prof.nick, isOwner: prof.isOwner });
+}
+
+socket.on('joinError', err => notify(err, "#ff4757"));
+socket.on('joinedRoomSuccess', (roomName) => {
+  inRoom = true;
+  others = {};
   document.getElementById('srv-modal').classList.add('hidden');
   document.getElementById('hud').classList.remove('hidden');
+  document.getElementById('top-left-bar').classList.remove('hidden');
   document.getElementById('mobile-controls').classList.remove('hidden');
-  socket.emit('joinRoom', { roomName, nick: prof.nick, isOwner: prof.isOwner });
-  requestAnimationFrame(loop);
+  notify(`Вы вошли на сервер: ${roomName}`);
+});
+
+// Выход с сервера обратно в меню выбора комнат
+function leaveServer() {
+  inRoom = false;
+  state = 'idle';
+  socket.emit('leaveRoom');
+  document.getElementById('hud').classList.add('hidden');
+  document.getElementById('top-left-bar').classList.add('hidden');
+  document.getElementById('mobile-controls').classList.add('hidden');
+  document.getElementById('inv-win').classList.add('hidden');
+  document.getElementById('end-win').classList.add('hidden');
+  document.getElementById('srv-modal').classList.remove('hidden');
+  socket.emit('getRooms');
 }
 
 socket.on('initProfile', p => { prof = p; updHud(); });
@@ -145,91 +282,280 @@ socket.on('currentPlayers', ps => { others = ps; delete others[socket.id]; });
 socket.on('newPlayer', p => others[p.id] = p);
 socket.on('playerMoved', p => others[p.id] = p);
 socket.on('playerDisconnected', id => delete others[id]);
-socket.on('incomingTrade', ({ fromId, fromNick }) => { if (prof.level >= 20 && confirm(`Трейд от ${fromNick}! Отдать последнюю рыбу?`)) { const item = prof.inventory.pop(); if (item) { save(); socket.emit('tradeAccept', { targetId: fromId, item }); } } });
-socket.on('tradeCompleted', ({ item }) => { prof.inventory.push(item); save(); alert(`Получено: ${item.name}`); });
+
+socket.on('incomingTrade', ({ fromId, fromNick }) => {
+  if (prof.level >= 20) {
+    askConfirm(`Трейд от ${fromNick}! Отдать последнюю рыбу из рюкзака?`, () => {
+      const item = prof.inventory.pop();
+      if (item) { save(); socket.emit('tradeAccept', { targetId: fromId, item }); }
+      else notify("Рюкзак пуст!", "#ff4757");
+    });
+  }
+});
+socket.on('tradeCompleted', ({ item }) => { prof.inventory.push(item); save(); notify(`Получено по трейду: ${item.name}`); });
 
 function save() { prof.level = Math.floor(prof.xp / 500) + 1; socket.emit('syncProfile', prof); updHud(); }
 function updHud() {
   const n = prof.isOwner ? `<span style="color:gold;">[OWNER] ${prof.nick}</span>` : prof.nick;
   document.getElementById('hud-info').innerHTML = `${n} | LVL: <b>${prof.level}</b> (${prof.xp} XP) | ${loc === 'water' ? 'Вода' : 'Лава'}`;
 }
-function toggleLoc() { if (prof.level < 100 && !prof.isOwner) return alert("Лава доступна с 100+ уровня!"); loc = loc === 'water' ? 'lava' : 'water'; updHud(); socket.emit('playerMove', { x: px, location: loc, level: prof.level }); }
+function toggleLoc() {
+  if (prof.level < 100 && !prof.isOwner) return notify("Лава доступна с 100+ уровня!", "#ff4757");
+  loc = loc === 'water' ? 'lava' : 'water';
+  state = 'idle';
+  updHud();
+  socket.emit('playerMove', { x: px, location: loc, level: prof.level });
+}
 const c = document.getElementById('c'), ctx = c.getContext('2d');
 function rsz() { c.width = innerWidth; c.height = innerHeight; } window.onresize = rsz; rsz();
 
-let state = 'idle', power = 0, dir = 1, bobX = 0, barY = 50, fishY = 50, fVel = 0, prog = 30, tens = 0, hold = false, curFish = null;
-const W_FISH = [{n:"Треска",w:2,c:2},{n:"Фугу",w:1.8,c:25},{n:"Зюка",w:6,c:150},{n:"Левиафан",w:300,c:100000}];
-const L_FISH = [{n:"Огненный угорь",w:5,c:10},{n:"Магма-фугу",w:9,c:100},{n:"Лавовая зюка",w:24,c:1500},{n:"Дракон Ядра",w:500,c:100000}];
-const MUTS = [{n:"Обычная",m:1,c:1},{n:"Прозрачная",m:1.5,c:10},{n:"Фиолетовая",m:2.2,c:50},{n:"4 глаза",m:4,c:250}];
+// Состояния: 'idle' (берег), 'cast' (шкала дальности), 'underwater' (вид с крючка под водой!)
+let state = 'idle', power = 0, dir = 1;
+let hookX = 0, hookY = 0, tension = 0, hookedFish = null;
+let underwaterFishes = [];
+
+const W_FISH = [
+  {n:"Треска", w:2.2, c:2, col:"#7bed9f", sz:28},
+  {n:"Фугу", w:1.8, c:25, col:"#ffdd59", sz:24},
+  {n:"Зюка", w:6.5, c:150, col:"#70a1ff", sz:36},
+  {n:"Акула", w:42.0, c:2500, col:"#a4b0be", sz:52},
+  {n:"Левиафан", w:300.0, c:100000, col:"#ff4757", sz:75}
+];
+const L_FISH = [
+  {n:"Огненный угорь", w:5.0, c:10, col:"#ffa502", sz:32},
+  {n:"Магма-фугу", w:9.0, c:100, col:"#ff6348", sz:28},
+  {n:"Лавовая зюка", w:24.0, c:1500, col:"#ff4757", sz:40},
+  {n:"Дракон Ядра", w:500.0, c:100000, col:"#eccc68", sz:80}
+];
+const MUTS = [
+  {n:"Обычная", m:1, c:1, glow:null},
+  {n:"Прозрачная", m:1.5, c:10, glow:"rgba(255,255,255,0.4)"},
+  {n:"Фиолетовая", m:2.2, c:50, glow:"#a29bfe"},
+  {n:"4 глаза", m:4.0, c:250, glow:"#00d2d3"}
+];
+
+function spawnUnderwaterFishes(castPower) {
+  underwaterFishes = [];
+  const pool = loc === 'water' ? W_FISH : L_FISH;
+  const luck = 1 + (castPower / 45) + (prof.rod.lure * 0.6);
+
+  for (let i = 0; i < 9; i++) {
+    let f = pool;
+    pool.forEach(x => { if (Math.random() * x.c <= luck) f = x; });
+    let mut = MUTS;
+    MUTS.forEach(x => { if (Math.random() * x.c <= luck) mut = x; });
+
+    const rarity = Math.max(1, Math.round((f.c * mut.c) / luck));
+    const weight = +(f.w * (0.8 + Math.random() * 0.7) * mut.m).toFixed(2);
+    const fromLeft = Math.random() < 0.5;
+
+    underwaterFishes.push({
+      x: fromLeft ? -60 - Math.random() * 300 : c.width + 60 + Math.random() * 300,
+      y: 90 + Math.random() * (c.height - 180),
+      vx: (fromLeft ? 1 : -1) * (1.2 + Math.random() * 1.8),
+      data: {
+        name: f.n, mut: mut.n, weight,
+        chance: `1 к ${rarity.toLocaleString('ru-RU')}`,
+        xp: Math.round(weight * 15 * mut.m)
+      },
+      col: mut.glow || f.col,
+      sz: f.sz,
+      isTransparent: mut.n === "Прозрачная",
+      fourEyes: mut.n === "4 глаза"
+    });
+  }
+}
 
 function action() {
-  if (state === 'idle') { if (px < 520) return alert("Подойдите к воде/лаве справа!"); state = 'cast'; power = 0; }
-  else if (state === 'cast') {
-    bobX = px + 60 + (power / 100) * (250 + prof.rod.base * 40 + prof.rod.reel * 30);
-    const pool = loc === 'water' ? W_FISH : L_FISH, luck = 1 + power / 50 + prof.rod.lure * 0.5;
-    let f = pool, mut = MUTS;
-    pool.forEach(x => { if (Math.random() * x.c <= luck) f = x; });
-    MUTS.forEach(x => { if (Math.random() * x.c <= luck) mut = x; });
-    const chance = Math.round((f.c * mut.c) / luck), w = +(f.w * (0.8 + Math.random() * 0.8) * mut.m).toFixed(2);
-    curFish = { name: f.n, mut: mut.n, weight: w, chance: `1 к ${chance.toLocaleString('ru-RU')}`, xp: Math.round(w * 15 * mut.m) };
-    state = 'mini'; barY = 50; fishY = 50; prog = 30; tens = 0;
+  if (!inRoom) return;
+  if (state === 'idle') {
+    if (px < 520) return notify("Подойдите к воде или лаве справа!", "#ffa502");
+    state = 'cast';
+    power = 0;
+  } else if (state === 'cast') {
+    state = 'underwater';
+    hookX = c.width / 2;
+    hookY = c.height / 2;
+    tension = 0;
+    hookedFish = null;
+    spawnUnderwaterFishes(power);
+    document.getElementById('b-act').innerText = "ПОДСЕЧЬ";
+    notify("Наведите крючок на рыбу и нажмите ПОДСЕЧЬ!", "#00d2d3");
+  } else if (state === 'underwater') {
+    if (!hookedFish) {
+      const grabRadius = 35 + prof.rod.bobber * 5;
+      for (let f of underwaterFishes) {
+        if (Math.hypot(f.x - hookX, f.y - hookY) <= grabRadius + f.sz * 0.5) {
+          hookedFish = f;
+          notify(`Подсечена: [${f.data.mut}] ${f.data.name} (${f.data.weight} кг)! Тяните вверх!`, "gold");
+          break;
+        }
+      }
+      if (!hookedFish) notify("Мимо! Наведите крючок ближе к рыбе.", "#ff6b6b");
+    } else {
+      hookY -= 22 + prof.rod.reel * 4;
+      const maxWeight = prof.rod.line * 15;
+      if (hookedFish.data.weight > maxWeight) {
+        tension += (hookedFish.data.weight / maxWeight) * 18;
+      } else {
+        tension += 6;
+      }
+    }
   }
 }
 
 const keys = {};
-window.onkeydown = e => { keys[e.code] = true; if (e.code === 'Space') { hold = true; action(); } };
-window.onkeyup = e => { keys[e.code] = false; if (e.code === 'Space') hold = false; };
-const touch = (id, d, u) => { const el = document.getElementById(id); el.ontouchstart = e => { e.preventDefault(); d(); }; el.ontouchend = e => { e.preventDefault(); if (u) u(); }; };
-touch('b-left', () => keys['ArrowLeft'] = true, () => keys['ArrowLeft'] = false);
-touch('b-right', () => keys['ArrowRight'] = true, () => keys['ArrowRight'] = false);
-touch('b-act', () => { hold = true; action(); }, () => hold = false);
-touch('b-use', () => {
-  if (Math.abs(px - 140) < 60) { renderEnd(); openWin('end-win'); }
-  else if (prof.level >= 20) { for (let id in others) if (Math.abs(others[id].x - px) < 50) { socket.emit('tradeRequest', { targetId: id, fromNick: prof.nick }); break; } }
-});
+window.onkeydown = e => { keys[e.code] = true; if (e.code === 'Space') action(); };
+window.onkeyup = e => { keys[e.code] = false; };
+const touch = (id, k) => {
+  const el = document.getElementById(id);
+  el.ontouchstart = e => { e.preventDefault(); keys[k] = true; };
+  el.ontouchend = e => { e.preventDefault(); keys[k] = false; };
+};
+touch('b-left', 'ArrowLeft');
+touch('b-right', 'ArrowRight');
+touch('b-up', 'ArrowUp');
+touch('b-down', 'ArrowDown');
 
+document.getElementById('b-act').ontouchstart = e => { e.preventDefault(); action(); };
+document.getElementById('b-act').onclick = () => action();
+document.getElementById('b-use').onclick = () => {
+  if (state !== 'idle') return;
+  if (Math.abs(px - 140) < 60) { renderEnd(); openWin('end-win'); }
+  else if (prof.level >= 20) {
+    for (let id in others) if (Math.abs(others[id].x - px) < 55) {
+      socket.emit('tradeRequest', { targetId: id, fromNick: prof.nick });
+      notify(`Запрос на трейд отправлен игроку ${others[id].nick}`);
+      break;
+    }
+  } else {
+    notify("Трейды доступны с 20+ уровня!", "#ffa502");
+  }
+};
 let camX = 0;
 const vis = (wx, w) => (wx + w >= camX) && (wx <= camX + c.width);
 
 function loop() {
-  if (state === 'idle') {
-    let mv = false;
-    if (keys['ArrowLeft']) { px = Math.max(80, px - 4); mv = true; }
-    if (keys['ArrowRight']) { px = Math.min(620, px + 4); mv = true; }
-    if (mv) socket.emit('playerMove', { x: px, location: loc, level: prof.level });
+  if (!inRoom) { requestAnimationFrame(loop); return; }
+
+  // --- РЕЖИМ 1: БЕРЕГ ---
+  if (state === 'idle' || state === 'cast') {
+    document.getElementById('b-act').innerText = state === 'idle' ? "ЗАБРОС" : "КИНУТЬ";
+    if (state === 'idle') {
+      let mv = false;
+      if (keys['ArrowLeft'] || keys['KeyA']) { px = Math.max(80, px - 4); mv = true; }
+      if (keys['ArrowRight'] || keys['KeyD']) { px = Math.min(620, px + 4); mv = true; }
+      if (mv) socket.emit('playerMove', { x: px, location: loc, level: prof.level });
+    }
+    if (state === 'cast') {
+      power += 2.5 * dir;
+      if (power >= 100 || power <= 0) dir *= -1;
+    }
+
+    camX = Math.max(0, px - c.width / 3);
+    ctx.fillStyle = loc === 'water' ? '#48dbfb' : '#2d132c';
+    ctx.fillRect(0, 0, c.width, c.height);
+    const gY = c.height - 120;
+
+    if (vis(0, 650)) {
+      ctx.fillStyle = loc === 'water' ? '#2ecc71' : '#574b90'; ctx.fillRect(-camX, gY, 650, 120);
+      ctx.fillStyle = '#c8d6e5'; ctx.fillRect(180 - camX, gY, 450, 12);
+    }
+    if (vis(120, 40)) {
+      ctx.fillStyle = '#2c2c54'; ctx.fillRect(120 - camX, gY - 35, 40, 35);
+      ctx.fillStyle = '#a29bfe'; ctx.fillRect(136 - camX, gY - 22, 8, 8);
+    }
+    if (vis(650, 1850)) {
+      ctx.fillStyle = loc === 'water' ? '#0984e3' : '#e84118'; ctx.fillRect(650 - camX, gY + 15, 1850, 105);
+    }
+
+    for (let id in others) {
+      const o = others[id];
+      if (o.location === loc && vis(o.x, 30)) drawChar(o.x - camX, gY - 40, o.nick, o.isOwner, o.level);
+    }
+    drawChar(px - camX, gY - 40, prof.nick, prof.isOwner, prof.level);
+
+    if (state === 'cast') {
+      ctx.fillStyle = '#222'; ctx.fillRect(px - camX - 30, gY - 90, 100, 16);
+      ctx.fillStyle = '#2ecc71'; ctx.fillRect(px - camX - 30, gY - 90, power, 16);
+    }
   }
-  if (state === 'cast') { power += 2.5 * dir; if (power >= 100 || power <= 0) dir *= -1; }
-  if (state === 'mini') {
-    barY = hold ? Math.max(0, barY - 2.2) : Math.min(80, barY + 1.8);
-    if (Math.random() < 0.05) fVel = (Math.random() - 0.5) * 4;
-    fishY = Math.max(0, Math.min(90, fishY + fVel));
-    const bSize = 20 + prof.rod.bobber * 2, maxW = prof.rod.line * 15;
-    if (fishY >= barY && fishY <= barY + bSize) { prog += 0.5; tens = Math.max(0, tens - 0.5); }
-    else { prog -= 0.3; tens += 0.5 * (curFish.weight > maxW ? curFish.weight / maxW : 0.6); }
-    if (tens >= 100) { alert(`Леска порвалась! Вес: ${curFish.weight} кг`); state = 'idle'; }
-    else if (prog >= 100) { prof.inventory.push(curFish); prof.xp += curFish.xp; save(); alert(`Улов: [${curFish.mut}] ${curFish.name} (${curFish.weight} кг) | ${curFish.chance}`); state = 'idle'; }
-    else if (prog <= 0) { alert("Рыба сорвалась!"); state = 'idle'; }
+
+  // --- РЕЖИМ 2: ВИД ОТ 1-ГО ЛИЦА С КРЮЧКА ПОД ВОДОЙ ---
+  if (state === 'underwater') {
+    const spd = 3.5 + prof.rod.reel * 0.4;
+    if (keys['ArrowLeft'] || keys['KeyA']) hookX = Math.max(30, hookX - spd);
+    if (keys['ArrowRight'] || keys['KeyD']) hookX = Math.min(c.width - 30, hookX + spd);
+    if (keys['ArrowUp'] || keys['KeyW']) hookY = Math.max(30, hookY - spd);
+    if (keys['ArrowDown'] || keys['KeyS']) hookY = Math.min(c.height - 30, hookY + spd);
+
+    ctx.fillStyle = loc === 'water' ? '#0652DD' : '#b33939';
+    ctx.fillRect(0, 0, c.width, c.height);
+
+    ctx.fillStyle = loc === 'water' ? '#48dbfb' : '#ff793f';
+    ctx.fillRect(0, 0, c.width, 45);
+    ctx.fillStyle = '#000'; ctx.font = 'bold 12px monospace';
+    ctx.fillText("ВЫТЯНИТЕ РЫБУ СЮДА НА ПОВЕРХНОСТЬ", c.width / 2 - 130, 28);
+
+    ctx.strokeStyle = tension > 70 ? '#ff4757' : '#fff';
+    ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(hookX, 0); ctx.lineTo(hookX, hookY); ctx.stroke();
+
+    ctx.strokeStyle = '#dfe4ea'; ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(hookX - 6, hookY, 8, 0, Math.PI, false); ctx.stroke();
+
+    underwaterFishes.forEach(f => {
+      if (f === hookedFish) {
+        f.x = hookX;
+        f.y = hookY + 10;
+        hookY = Math.min(c.height - 40, hookY + 0.7);
+        tension = Math.max(0, tension - 0.35);
+      } else {
+        f.x += f.vx;
+        if (f.x < -120) f.x = c.width + 100;
+        if (f.x > c.width + 120) f.x = -100;
+      }
+
+      ctx.save();
+      if (f.isTransparent) ctx.globalAlpha = 0.45;
+      ctx.fillStyle = f.col;
+      ctx.fillRect(f.x - f.sz / 2, f.y - f.sz / 4, f.sz, f.sz / 2);
+      const tailX = f.vx > 0 ? f.x - f.sz / 2 - 8 : f.x + f.sz / 2;
+      ctx.fillRect(tailX, f.y - f.sz / 5, 8, f.sz / 2.5);
+      ctx.fillStyle = '#000';
+      const eyeX = f.vx > 0 ? f.x + f.sz / 4 : f.x - f.sz / 4 - 4;
+      ctx.fillRect(eyeX, f.y - 4, 4, 4);
+      if (f.fourEyes) ctx.fillRect(eyeX - 6, f.y - 4, 4, 4);
+      ctx.restore();
+
+      if (Math.hypot(f.x - hookX, f.y - hookY) < 95) {
+        ctx.fillStyle = 'gold'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
+        ctx.fillText(`${f.data.name} (${f.data.chance})`, f.x, f.y - f.sz / 2 - 6);
+        ctx.textAlign = 'left';
+      }
+    });
+
+    if (hookedFish) {
+      ctx.fillStyle = '#111'; ctx.fillRect(c.width / 2 - 100, 55, 200, 14);
+      ctx.fillStyle = tension > 75 ? '#ff4757' : '#2ecc71';
+      ctx.fillRect(c.width / 2 - 100, 55, 200 * (tension / 100), 14);
+      ctx.fillStyle = '#fff'; ctx.font = '11px monospace';
+      ctx.fillText("Натяжение лески", c.width / 2 - 50, 66);
+
+      if (tension >= 100) {
+        notify(`Леска порвалась! Рыба (${hookedFish.data.weight} кг) слишком тяжелая.`, "#ff4757");
+        state = 'idle';
+      } else if (hookY <= 45) {
+        const caught = hookedFish.data;
+        prof.inventory.push(caught);
+        prof.xp += caught.xp;
+        save();
+        notify(`Улов: [${caught.mut}] ${caught.name} (${caught.weight} кг) | Шанс: ${caught.chance}`, "#2ecc71");
+        state = 'idle';
+      }
+    }
   }
-  camX = Math.max(0, px - c.width / 3);
-  ctx.fillStyle = loc === 'water' ? '#48dbfb' : '#2d132c'; ctx.fillRect(0, 0, c.width, c.height);
-  const gY = c.height - 120;
-  if (vis(0, 650)) { ctx.fillStyle = loc === 'water' ? '#2ecc71' : '#574b90'; ctx.fillRect(-camX, gY, 650, 120); ctx.fillStyle = '#c8d6e5'; ctx.fillRect(180 - camX, gY, 450, 12); }
-  if (vis(120, 40)) { ctx.fillStyle = '#2c2c54'; ctx.fillRect(120 - camX, gY - 35, 40, 35); ctx.fillStyle = '#a29bfe'; ctx.fillRect(136 - camX, gY - 22, 8, 8); }
-  if (vis(650, 1850)) { ctx.fillStyle = loc === 'water' ? '#0984e3' : '#e84118'; ctx.fillRect(650 - camX, gY + 15, 1850, 105); }
-  for (let id in others) { const o = others[id]; if (o.location === loc && vis(o.x, 30)) drawChar(o.x - camX, gY - 40, o.nick, o.isOwner, o.level); }
-  drawChar(px - camX, gY - 40, prof.nick, prof.isOwner, prof.level);
-  if (state === 'mini' && vis(bobX, 10)) { ctx.strokeStyle = '#fff'; ctx.beginPath(); ctx.moveTo(px + 25 - camX, gY - 30); ctx.lineTo(bobX - camX, gY + 15); ctx.stroke(); ctx.fillStyle = '#ff4757'; ctx.fillRect(bobX - 5 - camX, gY + 10, 10, 10); }
-  if (state === 'cast') { ctx.fillStyle = '#222'; ctx.fillRect(px - camX - 30, gY - 90, 100, 16); ctx.fillStyle = '#2ecc71'; ctx.fillRect(px - camX - 30, gY - 90, power, 16); }
-  if (state === 'mini') {
-    const mx = c.width / 2 - 120, my = 70;
-    ctx.fillStyle = 'rgba(0,0,0,0.85)'; ctx.fillRect(mx, my, 240, 210);
-    ctx.fillStyle = 'gold'; ctx.font = 'bold 13px monospace'; ctx.fillText(`Шанс: ${curFish.chance}`, mx + 15, my + 22);
-    ctx.fillStyle = '#333'; ctx.fillRect(mx + 25, my + 50, 25, 140);
-    ctx.fillStyle = '#2ecc71'; ctx.fillRect(mx + 25, my + 50 + barY * 1.4, 25, (20 + prof.rod.bobber * 2) * 1.4);
-    ctx.fillStyle = '#ff9f43'; ctx.fillRect(mx + 29, my + 50 + fishY * 1.4, 17, 12);
-    ctx.fillStyle = '#00a8ff'; ctx.fillRect(mx + 75, my + 75, 130 * (prog / 100), 15);
-    ctx.fillStyle = tens > 75 ? '#ff4757' : '#ffa502'; ctx.fillRect(mx + 75, my + 125, 130 * (tens / 100), 15);
-  }
+
   requestAnimationFrame(loop);
 }
 
@@ -239,7 +565,7 @@ function drawChar(x, y, nick, own, lvl) {
   ctx.fillText(own ? `[OWNER] ${nick} (${lvl})` : `${nick} (${lvl})`, x + 14, y - 8); ctx.textAlign = 'left';
 }
 function openWin(id) { const el = document.getElementById(id); el.classList.toggle('hidden'); if (id === 'inv-win' && !el.classList.contains('hidden')) renderInv(); }
-function upg(k) { if (prof.xp < 50) return alert("Нужно 50 XP!"); prof.xp -= 50; prof.rod[k]++; save(); renderInv(); }
+function upg(k) { if (prof.xp < 50) return notify("Нужно 50 XP!", "#ff4757"); prof.xp -= 50; prof.rod[k]++; save(); renderInv(); }
 function renderInv() {
   const r = prof.rod; document.getElementById('rod-txt').innerText = `Основание:${r.base} | Леска:${r.line} (до ${r.line*15}кг) | Моток:${r.reel} | Приманка:${r.lure} | Поплавок:${r.bobber}`;
   const l = document.getElementById('inv-list'); l.innerHTML = '';
@@ -251,6 +577,7 @@ function renderEnd() {
   prof.enderChest.forEach((f, i) => l.innerHTML += `<div class="card"><span>[${f.mut}] ${f.name} (${f.weight}кг)</span><button class="s-btn" onclick="fromEnd(${i})">Забрать</button></div>`);
 }
 function fromEnd(i) { prof.inventory.push(prof.enderChest.splice(i, 1)); save(); renderEnd(); }
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
