@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        body {
+            background: #1a1a2e;
+            color: #ffd700;
+            font-family: 'Courier New', monospace;
+            padding: 10px;
+            margin: 0;
+            border: 2px solid #ffd700;
+        }
+        h3 { margin: 0 0 10px 0; text-align: center; text-shadow: 0 0 5px #ff8c00; }
+        .row { display: flex; gap: 5px; margin-bottom: 8px; }
+        input {
+            background: #0f3460; border: 1px solid #ffd700; color: #fff;
+            padding: 5px; flex: 1; font-family: inherit;
+        }
+        button {
+            background: #ffd700; color: #000; border: none; padding: 5px 10px;
+            font-weight: bold; cursor: pointer; font-family: inherit;
+        }
+        button:hover { background: #ffea00; }
+    </style>
+</head>
+<body>
+    <h3>👑 OWNER PANEL: HELM77ZX</h3>
+    <div class="row">
+        <input type="number" id="lvlInput" placeholder="Уровень (напр. 150)">
+        <button onclick="sendCmd('set_level', document.getElementById('lvlInput').value)">Выдать LVL</button>
+    </div>
+    <div class="row">
+        <button style="width:100%" onclick="sendCmd('give_god_rod', 1)">Выдать Админ-снасти (99999 кг)</button>
+    </div>
+    <div class="row">
+        <input type="text" id="msgInput" placeholder="Глобальное объявление...">
+        <button onclick="sendCmd('announce', document.getElementById('msgInput').value)">В чат</button>
+    </div>
+
+    <script>
+        function sendCmd(cmd, value) {
+            window.parent.postMessage({ type: 'ADMIN_CMD', cmd, value }, '*');
+        }
+    </script>
+</body>
+</html>
