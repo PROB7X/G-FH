@@ -1,14 +1,14 @@
 {
-  "name": "terraria-fishing-online",
+  "name": "geese-island-mmo",
   "version": "1.0.0",
-  "description": "2D Pixel Online Fishing Game",
+  "description": "Pseudo-3D Online Farm & Adventure Game",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
-    "cors": "^2.8.5",
     "express": "^4.18.2",
-    "socket.io": "^4.7.2"
+    "socket.io": "^4.7.2",
+    "cors": "^2.8.5"
   }
 }
