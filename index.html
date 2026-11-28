@@ -3,33 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Гуси! — Онлайн Остров</title>
+  <title>Гуси! — 3D Острова</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
-    body, html { width: 100%; height: 100%; overflow: hidden; background: #1e3a2f; color: #fff; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #143642; color: #fff; }
 
-    .svg-icon { width: 18px; height: 18px; vertical-align: middle; fill: currentColor; flex-shrink: 0; }
-    .svg-title { width: 32px; height: 32px; vertical-align: middle; fill: currentColor; margin-right: 8px; }
+    .svg-icon { width: 20px; height: 20px; fill: currentColor; flex-shrink: 0; }
+    .svg-lg { width: 28px; height: 28px; fill: currentColor; }
 
     #fs-overlay {
-      position: fixed; inset: 0; background: rgba(15, 30, 24, 0.96);
+      position: fixed; inset: 0; background: rgba(12, 28, 36, 0.96);
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       z-index: 9999; text-align: center; padding: 20px;
     }
     #fs-close {
       position: absolute; top: 20px; right: 25px; cursor: pointer;
       background: rgba(255,255,255,0.12); width: 46px; height: 46px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center; transition: 0.2s;
+      display: flex; align-items: center; justify-content: center;
     }
     #fs-close:hover { background: #e74c3c; }
     .btn-primary {
       background: linear-gradient(135deg, #f39c12, #e67e22); border: none; color: white;
-      padding: 16px 36px; font-size: 20px; font-weight: bold; border-radius: 14px;
-      cursor: pointer; box-shadow: 0 6px 0 #b95e0e; margin-top: 20px; transition: 0.1s;
+      padding: 16px 36px; font-size: 19px; font-weight: bold; border-radius: 14px;
+      cursor: pointer; box-shadow: 0 6px 0 #b95e0e; margin-top: 20px;
       display: inline-flex; align-items: center; gap: 10px;
     }
-    .btn-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #b95e0e; }
 
     #main-menu {
       position: fixed; inset: 0; background: radial-gradient(circle, #2ecc71 0%, #145a32 100%);
@@ -39,7 +38,7 @@
       background: rgba(255, 255, 255, 0.96); color: #2c3e50; padding: 30px; border-radius: 20px;
       width: 90%; max-width: 400px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
     }
-    .menu-card h1 { color: #d35400; margin-bottom: 8px; font-size: 30px; display: flex; align-items: center; justify-content: center; }
+    .menu-card h1 { color: #d35400; margin-bottom: 8px; font-size: 28px; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .menu-card input {
       width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #bdc3c7;
       border-radius: 10px; font-size: 16px; text-align: center;
@@ -53,7 +52,7 @@
     .btn-coop { background: #2980b9; }
 
     #game-ui { display: none; width: 100%; height: 100%; position: relative; }
-    canvas { display: block; width: 100%; height: 100%; background: #3498db; }
+    canvas { display: block; width: 100%; height: 100%; background: #1b6ca8; }
 
     .top-bar {
       position: absolute; top: 10px; left: 10px; right: 10px;
@@ -66,31 +65,65 @@
       display: inline-flex; align-items: center; gap: 6px;
     }
     .action-btn {
-      background: #8e44ad; color: white; border: none; padding: 6px 14px;
-      border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px;
-      display: inline-flex; align-items: center; gap: 6px;
+      background: #8e44ad; color: white; border: none; padding: 7px 12px;
+      border-radius: 20px; cursor: pointer; font-weight: bold;
+      display: inline-flex; align-items: center; justify-content: center;
     }
 
-    .bottom-bar {
-      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
-      display: flex; gap: 6px; background: rgba(0,0,0,0.8); padding: 8px;
-      border-radius: 18px; border: 2px solid #f1c40f; max-width: 96vw; overflow-x: auto;
+    /* Нижний блок: Инвентарь сверху + Категории (только SVG) снизу */
+    .dock-wrapper {
+      position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 8px; max-width: 96vw;
     }
-    .tool-btn {
-      background: #34495e; color: white; border: 2px solid transparent;
-      padding: 9px 12px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: bold;
-      display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    .inventory-strip {
+      display: flex; gap: 6px; background: rgba(15, 25, 35, 0.88); padding: 6px 10px;
+      border-radius: 14px; border: 1px solid rgba(255,255,255,0.25);
     }
-    .tool-btn.active { border-color: #f1c40f; background: #d35400; }
+    .inv-slot {
+      width: 44px; height: 44px; background: #2c3e50; border: 2px solid #4a6278;
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      position: relative; cursor: pointer; color: #ecf0f1;
+    }
+    .inv-slot.selected { border-color: #f1c40f; background: #b95e0e; }
+    .inv-slot.locked { opacity: 0.35; cursor: not-allowed; }
+    .inv-count {
+      position: absolute; bottom: 2px; right: 4px; font-size: 10px; font-weight: bold; color: #f1c40f;
+    }
 
+    .category-bar {
+      display: flex; gap: 8px; background: rgba(0,0,0,0.85); padding: 8px 14px;
+      border-radius: 18px; border: 2px solid #f1c40f;
+    }
+    .cat-btn {
+      width: 46px; height: 46px; background: #34495e; color: white; border: 2px solid transparent;
+      border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .cat-btn.active { border-color: #f1c40f; background: #d35400; }
+
+    /* Панель выбора 3D-строений */
+    #build-drawer {
+      position: absolute; bottom: 128px; left: 50%; transform: translateX(-50%);
+      background: rgba(20, 30, 40, 0.95); border: 2px solid #f39c12; border-radius: 14px;
+      padding: 10px; display: none; gap: 8px; z-index: 400;
+    }
+    .build-card {
+      background: #2c3e50; padding: 8px 10px; border-radius: 10px; border: 2px solid transparent;
+      cursor: pointer; text-align: center; min-width: 95px; font-size: 12px;
+    }
+    .build-card.selected { border-color: #2ecc71; background: #1e4d3b; }
+
+    /* Модальные окна и Мини-игра рыбалки */
     .modal {
       position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
       background: #2c3e50; padding: 20px; border-radius: 16px; border: 2px solid #f39c12;
-      z-index: 800; display: none; min-width: 310px; max-width: 90%;
+      z-index: 800; display: none; min-width: 310px; max-width: 92%;
     }
     .modal h3 { margin-bottom: 12px; color: #f1c40f; display: flex; align-items: center; gap: 8px; }
     .modal input { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: none; }
-    .modal button { padding: 9px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+    .modal button { padding: 9px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin: 3px; }
+
+    .fish-bar-bg { width: 100%; height: 22px; background: #1a252f; border-radius: 11px; overflow: hidden; margin: 12px 0; border: 1px solid #fff; }
+    .fish-bar-fill { width: 0%; height: 100%; background: linear-gradient(90deg, #3498db, #2ecc71); transition: width 0.08s; }
 
     #toast {
       position: fixed; top: 65px; left: 50%; transform: translateX(-50%);
@@ -100,6 +133,7 @@
   </style>
 </head>
 <body>
+<!-- SVG Спрайты (Никаких смайликов) -->
 <svg style="display:none;" xmlns="http://w3.org">
   <symbol id="ic-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
   <symbol id="ic-fullscreen" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></symbol>
@@ -114,30 +148,28 @@
   <symbol id="ic-settings" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
   <symbol id="ic-crown" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></symbol>
   <symbol id="ic-walk" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></symbol>
-  <symbol id="ic-plow" viewBox="0 0 24 24"><path d="M14.79 10.62L3.5 21.9l-1.4-1.4L13.38 9.21l1.41 1.41zm4.48-6.49l-2.12-2.12-4.24 4.24 2.12 2.12 4.24-4.24z"/></symbol>
-  <symbol id="ic-plant" viewBox="0 0 24 24"><path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM5.6 10.25c0 1.38 1.12 2.5 2.5 2.5.53 0 1.01-.16 1.42-.44l-.02.19c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5l-.02-.19c.4.28.89.44 1.42.44 1.38 0 2.5-1.12 2.5-2.5 0-1-.59-1.85-1.43-2.25.84-.4 1.43-1.25 1.43-2.25 0-1.38-1.12-2.5-2.5-2.5-.53 0-1.01.16-1.42.44l.02-.19C14.5 2.12 13.38 1 12 1S9.5 2.12 9.5 3.5l.02.19c-.4-.28-.89-.44-1.42-.44-1.38 0-2.5 1.12-2.5 2.5 0 1 .59 1.85 1.43 2.25-.84.4-1.43 1.25-1.43 2.25zM12 5.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5S9.5 9.38 9.5 8s1.12-2.5 2.5-2.5zM3 13c0 4.97 4.03 9 9 9 0-4.97-4.03-9-9-9z"/></symbol>
-  <symbol id="ic-axe" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></symbol>
+  <symbol id="ic-shovel" viewBox="0 0 24 24"><path d="M14.79 10.62L3.5 21.9l-1.4-1.4L13.38 9.21l1.41 1.41zm4.48-6.49l-2.12-2.12-4.24 4.24 2.12 2.12 4.24-4.24z"/></symbol>
+  <symbol id="ic-plant" viewBox="0 0 24 24"><path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM5.6 10.25c0 1.38 1.12 2.5 2.5 2.5.53 0 1.01-.16 1.42-.44l-.02.19c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5l-.02-.19c.4.28.89.44 1.42.44 1.38 0 2.5-1.12 2.5-2.5 0-1-.59-1.85-1.43-2.25.84-.4 1.43-1.25 1.43-2.25 0-1.38-1.12-2.5-2.5-2.5-.53 0-1.01.16-1.42.44l.02-.19C14.5 2.12 13.38 1 12 1S9.5 2.12 9.5 3.5l.02.19c-.4-.28-.89-.44-1.42-.44-1.38 0-2.5 1.12-2.5 2.5 0 1 .59 1.85 1.43 2.25-.84.4-1.43 1.25-1.43 2.25zM3 13c0 4.97 4.03 9 9 9 0-4.97-4.03-9-9-9z"/></symbol>
+  <symbol id="ic-axe" viewBox="0 0 24 24"><path d="M18 3l3 3-8 8-3-3 8-8zM3 18l6-6 3 3-6 6H3v-3z"/></symbol>
   <symbol id="ic-build" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
   <symbol id="ic-fish" viewBox="0 0 24 24"><path d="M12 20l4-4H8l4 4zm0-16L8 8h8l-4-4zm9 8c-2.5-3.5-6-5-9-5s-6.5 1.5-9 5c2.5 3.5 6 5 9 5s6.5-1.5 9-5z"/></symbol>
+  <symbol id="ic-craft" viewBox="0 0 24 24"><path d="M22.7 19l-9.1-9.1c.9-2.3.4-5-1.5-6.9-2-2-5-2.4-7.4-1.3L9 6 6 9 1.6 4.7C.4 7.1.9 10.1 2.9 12.1c1.9 1.9 4.6 2.4 6.9 1.5l9.1 9.1c.4.4 1 .4 1.4 0l2.3-2.3c.5-.4.5-1.1.1-1.4z"/></symbol>
+  <symbol id="ic-boat" viewBox="0 0 24 24"><path d="M20 21c-1.39 0-2.78-.47-4-1.32-2.44 1.71-5.56 1.71-8 0C6.78 20.53 5.39 21 4 21H2v2h2c1.38 0 2.74-.35 4-.99 2.52 1.29 5.48 1.29 8 0 1.26.65 2.62.99 4 .99h2v-2h-2zM3.95 19H4c1.6 0 3.02-.88 4-2 .98 1.12 2.4 2 4 2s3.02-.88 4-2c.98 1.12 2.4 2 4 2h.05l1.89-6.68c.08-.26.06-.54-.06-.8s-.34-.44-.6-.53L20 10.62V6c0-1.1-.9-2-2-2h-3V1H9v3H6c-1.1 0-2 .9-2 2v4.62l-1.29.42c-.26.08-.48.26-.6.52s-.15.54-.06.8L3.95 19z"/></symbol>
 </svg>
 
 <div id="toast"></div>
 
 <div id="fs-overlay">
-  <div id="fs-close" title="Отказаться от полноэкранного режима">
-    <svg class="svg-icon" style="width:26px;height:26px;"><use href="#ic-close"/></svg>
-  </div>
-  <h1><svg class="svg-title"><use href="#ic-goose"/></svg>ГУСИ! Остров приключений</h1>
-  <p style="margin-top: 10px; opacity: 0.85;">Для лучшего погружения разверните игру на весь экран</p>
-  <button class="btn-primary" id="fs-enter-btn">
-    <svg class="svg-icon"><use href="#ic-fullscreen"/></svg> НА ВЕСЬ ЭКРАН
-  </button>
+  <div id="fs-close" title="Закрыть"><svg class="svg-lg"><use href="#ic-close"/></svg></div>
+  <h1><svg class="svg-lg"><use href="#ic-goose"/></svg> ГУСИ! 3D Острова</h1>
+  <p style="margin-top: 10px; opacity: 0.85;">Нажмите кнопку ниже, чтобы развернуть игру на весь экран</p>
+  <button class="btn-primary" id="fs-enter-btn"><svg class="svg-icon"><use href="#ic-fullscreen"/></svg> НА ВЕСЬ ЭКРАН</button>
 </div>
 
 <div id="main-menu">
   <div class="menu-card">
-    <h1><svg class="svg-title"><use href="#ic-goose"/></svg>ГУСИ!</h1>
-    <p>Онлайн-ферма и приключения</p>
+    <h1><svg class="svg-lg"><use href="#ic-goose"/></svg> ГУСИ!</h1>
+    <p>Онлайн-ферма и архипелаг</p>
     <input type="text" id="nick-input" placeholder="Введите ваш ник..." maxlength="16">
     <input type="password" id="admin-pass-input" placeholder="Пароль администратора" style="display:none;">
     <div class="menu-buttons">
@@ -153,34 +185,73 @@
   <div class="top-bar">
     <div class="res-group">
       <div class="badge"><svg class="svg-icon" style="color:#f1c40f"><use href="#ic-energy"/></svg><span id="res-energy">100</span></div>
-      <div class="badge"><svg class="svg-icon" style="color:#d35400"><use href="#ic-wood"/></svg><span id="res-wood">10</span></div>
+      <div class="badge"><svg class="svg-icon" style="color:#d35400"><use href="#ic-wood"/></svg><span id="res-wood">15</span></div>
       <div class="badge"><svg class="svg-icon" style="color:#3498db"><use href="#ic-water"/></svg><span id="res-water">10</span></div>
       <div class="badge"><svg class="svg-icon" style="color:#e67e22"><use href="#ic-food"/></svg><span id="res-food">5</span></div>
       <div class="badge"><svg class="svg-icon" style="color:#1abc9c"><use href="#ic-shell"/></svg><span id="res-shells">0</span></div>
-      <div class="badge" id="pet-badge" style="display:none; background:#8e44ad;">
-        <svg class="svg-icon"><use href="#ic-octopus"/></svg> Друг: Осьминог
-      </div>
+      <div class="badge" id="pet-badge" style="display:none; background:#8e44ad;"><svg class="svg-icon"><use href="#ic-octopus"/></svg></div>
     </div>
     <div class="res-group">
-      <button class="action-btn" onclick="openModal('invite-modal')"><svg class="svg-icon"><use href="#ic-users"/></svg>Пригласить</button>
-      <button class="action-btn" onclick="openModal('settings-modal')"><svg class="svg-icon"><use href="#ic-settings"/></svg>Ник</button>
-      <button class="action-btn" id="event-btn" style="display:none; background:#e67e22;" onclick="openModal('event-modal')"><svg class="svg-icon"><use href="#ic-shell"/></svg>Ивент-мир</button>
-      <button class="action-btn" id="admin-btn" style="display:none; background:#c0392b;" onclick="openModal('admin-modal')"><svg class="svg-icon"><use href="#ic-crown"/></svg>Админка</button>
+      <button class="action-btn" onclick="openModal('craft-modal')" title="Верстак"><svg class="svg-icon"><use href="#ic-craft"/></svg></button>
+      <button class="action-btn" onclick="openModal('invite-modal')" title="Пригласить"><svg class="svg-icon"><use href="#ic-users"/></svg></button>
+      <button class="action-btn" onclick="openModal('settings-modal')" title="Ник"><svg class="svg-icon"><use href="#ic-settings"/></svg></button>
+      <button class="action-btn" id="event-btn" style="display:none; background:#e67e22;" onclick="openModal('event-modal')"><svg class="svg-icon"><use href="#ic-shell"/></svg></button>
+      <button class="action-btn" id="admin-btn" style="display:none; background:#c0392b;" onclick="openModal('admin-modal')"><svg class="svg-icon"><use href="#ic-crown"/></svg></button>
     </div>
   </div>
-  <div class="bottom-bar">
-    <button class="tool-btn active" data-tool="move"><svg class="svg-icon"><use href="#ic-walk"/></svg>Идти</button>
-    <button class="tool-btn" data-tool="plow"><svg class="svg-icon"><use href="#ic-plow"/></svg>Вспахать</button>
-    <button class="tool-btn" data-tool="plant"><svg class="svg-icon"><use href="#ic-plant"/></svg>Посадить</button>
-    <button class="tool-btn" data-tool="water"><svg class="svg-icon"><use href="#ic-water"/></svg>Полить</button>
-    <button class="tool-btn" data-tool="chop"><svg class="svg-icon"><use href="#ic-axe"/></svg>Дрова</button>
-    <button class="tool-btn" data-tool="build"><svg class="svg-icon"><use href="#ic-build"/></svg>Строить</button>
-    <button class="tool-btn" data-tool="fish"><svg class="svg-icon"><use href="#ic-fish"/></svg>Рыбалка</button>
+
+  <!-- Выдвижная панель 3D-строений -->
+  <div id="build-drawer">
+    <div class="build-card selected" onclick="selectBlueprint('fence', 3, 2, 2000, this)">
+      <b>Забор</b><br>3 Дров | 2 Энерг.<br><small>2 сек.</small>
+    </div>
+    <div class="build-card" onclick="selectBlueprint('bridge', 5, 4, 3500, this)">
+      <b>Мостик (вода)</b><br>5 Дров | 4 Энерг.<br><small>3.5 сек.</small>
+    </div>
+    <div class="build-card" onclick="selectBlueprint('gazebo', 12, 8, 6000, this)">
+      <b>3D Беседка</b><br>12 Дров | 8 Энерг.<br><small>6 сек.</small>
+    </div>
+    <div class="build-card" onclick="selectBlueprint('lighthouse', 25, 15, 10000, this)">
+      <b>3D Маяк</b><br>25 Дров | 15 Энерг.<br><small>10 сек.</small>
+    </div>
   </div>
+
+  <!-- Нижний док: Инвентарь сверху + Категории снизу (ТОЛЬКО SVG) -->
+  <div class="dock-wrapper">
+    <div class="inventory-strip" id="inv-strip"></div>
+    <div class="category-bar">
+      <button class="cat-btn active" data-cat="move"><svg class="svg-icon"><use href="#ic-walk"/></svg></button>
+      <button class="cat-btn" data-cat="dig"><svg class="svg-icon"><use href="#ic-shovel"/></svg></button>
+      <button class="cat-btn" data-cat="farm"><svg class="svg-icon"><use href="#ic-plant"/></svg></button>
+      <button class="cat-btn" data-cat="chop"><svg class="svg-icon"><use href="#ic-axe"/></svg></button>
+      <button class="cat-btn" data-cat="build"><svg class="svg-icon"><use href="#ic-build"/></svg></button>
+      <button class="cat-btn" data-cat="fish"><svg class="svg-icon"><use href="#ic-fish"/></svg></button>
+    </div>
+  </div>
+</div>
+<!-- Модальное окно: Верстак (Стол крафтов) -->
+<div class="modal" id="craft-modal">
+  <h3><svg class="svg-icon"><use href="#ic-craft"/></svg>Стол крафтов</h3>
+  <p style="font-size:12px; margin-bottom:10px; opacity:0.85;">Создайте инструменты для работы на острове:</p>
+  <button style="background:#27ae60; color:white; width:100%;" onclick="craftItem('shovel', 2)">Лопата (2 Дров) — тропинки и грядки</button>
+  <button style="background:#27ae60; color:white; width:100%;" onclick="craftItem('axe', 3)">Топор (3 Дров) — рубка 3D-деревьев</button>
+  <button style="background:#27ae60; color:white; width:100%;" onclick="craftItem('hammer', 4)">Молоток (4 Дров) — 3D-строительство</button>
+  <button style="background:#2980b9; color:white; width:100%;" onclick="craftItem('rod', 4)">Удочка (4 Дров) — рыбалка у берега</button>
+  <button style="background:#d35400; color:white; width:100%;" onclick="craftItem('boat', 8)">Лодка (8 Дров) — плавание между островами</button>
+  <button style="background:#7f8c8d; color:white; margin-top:8px;" onclick="closeModals()">Закрыть</button>
+</div>
+
+<!-- Модальное окно: Кликер рыбалки -->
+<div class="modal" id="fish-modal" style="text-align:center;">
+  <h3><svg class="svg-icon"><use href="#ic-fish"/></svg><span id="fish-status-title">Ожидание клёва...</span></h3>
+  <p id="fish-hint" style="font-size:13px;">Подождите, пока поплавок дёрнется...</p>
+  <div class="fish-bar-bg"><div class="fish-bar-fill" id="fish-bar"></div></div>
+  <button id="fish-click-btn" style="background:#e67e22; color:white; width:100%; padding:14px; font-size:16px; display:none;" onclick="fishClick()">ТЯНУТЬ! (КЛИКАЙ)</button>
+  <button style="background:#7f8c8d; color:white; margin-top:8px;" onclick="cancelFishing()">Отмена</button>
 </div>
 
 <div class="modal" id="invite-modal">
-  <h3><svg class="svg-icon"><use href="#ic-users"/></svg>Пригласить в свой мир</h3>
+  <h3><svg class="svg-icon"><use href="#ic-users"/></svg>Пригласить в мир</h3>
   <p style="font-size:13px; margin-bottom:8px;">Ваш ник: <b id="my-nick-display"></b></p>
   <input type="text" id="invite-nick-input" placeholder="Ник друга...">
   <button style="background:#27ae60; color:white;" onclick="sendInvite()">Позвать</button>
@@ -188,7 +259,7 @@
 </div>
 
 <div class="modal" id="settings-modal">
-  <h3><svg class="svg-icon"><use href="#ic-settings"/></svg>Сменить игровой ник</h3>
+  <h3><svg class="svg-icon"><use href="#ic-settings"/></svg>Сменить ник</h3>
   <input type="text" id="new-nick-input" placeholder="Новый ник...">
   <button style="background:#2980b9; color:white;" onclick="changeNick()">Сохранить</button>
   <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Отмена</button>
@@ -196,10 +267,8 @@
 
 <div class="modal" id="event-modal">
   <h3><svg class="svg-icon"><use href="#ic-shell"/></svg>Ивент-мир: Тайны Рифа</h3>
-  <p style="font-size:13px; margin-bottom:10px;">Выполняйте миссии и меняйте ракушки на награды!</p>
-  <button style="background:#16a085; color:white; width:100%; margin-bottom:8px;" onclick="doEventMission()">Миссия: Собрать водоросли (+5 ракушек)</button>
-  <button style="background:#d35400; color:white; width:100%; margin-bottom:8px;" onclick="buyEventReward('deco')">Купить: Золотой фонтан (10 ракушек)</button>
-  <button style="background:#8e44ad; color:white; width:100%; margin-bottom:8px;" onclick="buyEventReward('skin')">Персонаж: Королевский Гусь (15 ракушек)</button>
+  <button style="background:#16a085; color:white; width:100%;" onclick="doEventMission()">Миссия: Собрать водоросли (+5 ракушек)</button>
+  <button style="background:#8e44ad; color:white; width:100%;" onclick="buyEventSkin()">Персонаж: Королевский Гусь (15 ракушек)</button>
   <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Закрыть</button>
 </div>
 
@@ -211,181 +280,269 @@
     <button style="background:#2980b9; color:white;" onclick="adminCmd('giveResources', {resource:'water', amount:50})">+50 Воды</button>
     <button style="background:#e67e22; color:white;" onclick="adminCmd('giveResources', {resource:'food', amount:50})">+50 Еды</button>
     <button style="background:#f1c40f; color:black;" onclick="adminCmd('giveEnergy', {amount:100})">+100 Энергии</button>
-    <button style="background:#8e44ad; color:white;" onclick="adminCmd('unlockLocation', {zone:'north'})">Открыть локацию</button>
+    <button style="background:#8e44ad; color:white;" onclick="adminCmd('unlockLocation', {})">Мост на остров</button>
     <button style="background:#c0392b; color:white;" onclick="adminCmd('toggleEvent', {})">Вкл/Выкл Ивент</button>
   </div>
-  <a href="/widget.html" target="_blank" style="color:#f1c40f; display:block; margin-bottom:10px; font-size:13px;">Открыть внешний виджет (widget.html)</a>
+  <a href="/widget.html" target="_blank" style="color:#f1c40f; display:block; margin-bottom:8px; font-size:13px;">Открыть внешний виджет (widget.html)</a>
   <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Закрыть</button>
 </div>
 
 <script>
   const socket = io();
-  let fsDismissed = false;
-  let myNick = '';
-  let isAdmin = false;
-  let currentTool = 'move';
-  let gooseColor = '#ffffff';
+  let fsDismissed = false, myNick = '', isAdmin = false;
+  let currentCat = 'move', gooseColor = '#ffffff';
 
-  const stats = { energy: 100, wood: 10, water: 10, food: 5, shells: 0, hasOctopus: false };
-  let worldData = { tiles: {}, unlockedZones: ['main'], eventActive: false };
+  const stats = { energy: 100, wood: 15, water: 10, food: 5, shells: 0, hasOctopus: false };
+  // Инвентарь инструментов и предметов
+  const inventory = [
+    { id: 'shovel', icon: '#ic-shovel', owned: false, count: 0 },
+    { id: 'axe', icon: '#ic-axe', owned: false, count: 0 },
+    { id: 'hammer', icon: '#ic-build', owned: false, count: 0 },
+    { id: 'rod', icon: '#ic-fish', owned: false, count: 0 },
+    { id: 'boat', icon: '#ic-boat', owned: false, count: 0 },
+    { id: 'seeds', icon: '#ic-plant', owned: true, count: 5 }
+  ];
+  let selectedInvId = 'seeds';
+
+  // Выбранный чертёж 3D-строения
+  let blueprint = { item: 'fence', wood: 3, energy: 2, time: 2000 };
+
+  let worldData = { size: 34, tiles: {}, eventActive: false };
+  // Локальные плавные координаты гуся и камеры
+  let myPos = { x: 12, y: 12, targetX: 12, targetY: 12, inBoat: false };
+  let camPos = { x: 12, y: 12 };
   let players = {};
-  let myPos = { x: 10, y: 10 };
 
+  function renderInventory() {
+    const strip = document.getElementById('inv-strip');
+    strip.innerHTML = '';
+    inventory.forEach(slot => {
+      const div = document.createElement('div');
+      div.className = 'inv-slot' + (slot.owned ? '' : ' locked') + (selectedInvId === slot.id ? ' selected' : '');
+      div.innerHTML = `<svg class="svg-icon"><use href="${slot.icon}"/></svg>` +
+        (slot.count > 0 ? `<span class="inv-count">${slot.count}</span>` : '');
+      div.onclick = () => {
+        if (!slot.owned) return showToast('Скрафтите этот предмет на Столе крафтов!');
+        selectedInvId = slot.id;
+        renderInventory();
+      };
+      strip.appendChild(div);
+    });
+  }
+
+  function craftItem(id, woodCost) {
+    if (stats.wood < woodCost) return showToast('Недостаточно дров!');
+    const item = inventory.find(i => i.id === id);
+    if (item.owned && id !== 'seeds') return showToast('Этот инструмент уже есть в инвентаре!');
+    stats.wood -= woodCost;
+    item.owned = true;
+    item.count = 1;
+    selectedInvId = id;
+    updateUI();
+    renderInventory();
+    showToast('Предмет создан и добавлен в инвентарь!');
+  }
+
+  function selectBlueprint(item, wood, energy, time, el) {
+    blueprint = { item, wood, energy, time };
+    document.querySelectorAll('.build-card').forEach(c => c.classList.remove('selected'));
+    el.classList.add('selected');
+  }
+
+  // Полноэкранный режим
   const fsOverlay = document.getElementById('fs-overlay');
-  const fsEnterBtn = document.getElementById('fs-enter-btn');
-  const fsClose = document.getElementById('fs-close');
-  const mainMenu = document.getElementById('main-menu');
-
-  fsEnterBtn.onclick = () => {
+  document.getElementById('fs-enter-btn').onclick = () => {
     const el = document.documentElement;
     if (el.requestFullscreen) el.requestFullscreen();
     else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
     fsOverlay.style.display = 'none';
-    if (!myNick) mainMenu.style.display = 'flex';
+    if (!myNick) document.getElementById('main-menu').style.display = 'flex';
   };
-
-  fsClose.onclick = () => {
+  document.getElementById('fs-close').onclick = () => {
     fsDismissed = true;
     fsOverlay.style.display = 'none';
-    if (!myNick) mainMenu.style.display = 'flex';
+    if (!myNick) document.getElementById('main-menu').style.display = 'flex';
   };
-
   document.addEventListener('fullscreenchange', () => {
     if (!document.fullscreenElement && !fsDismissed) fsOverlay.style.display = 'flex';
   });
 
-  const nickInput = document.getElementById('nick-input');
-  const adminPassInput = document.getElementById('admin-pass-input');
-
-  nickInput.addEventListener('input', () => {
-    adminPassInput.style.display = (nickInput.value.trim() === 'HELM77ZX') ? 'block' : 'none';
+  document.getElementById('nick-input').addEventListener('input', (e) => {
+    document.getElementById('admin-pass-input').style.display = (e.target.value.trim() === 'HELM77ZX') ? 'block' : 'none';
   });
 
   async function startGame(mode) {
-    const nick = nickInput.value.trim();
+    const nick = document.getElementById('nick-input').value.trim();
     if (!nick) return showToast('Введите ваш ник!');
-
     if (nick === 'HELM77ZX') {
-      const password = adminPassInput.value;
+      const password = document.getElementById('admin-pass-input').value;
       const res = await fetch('/api/auth-admin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nick, password })
       });
       const data = await res.json();
-      if (!data.success) return showToast('Неверный пароль для HELM77ZX!');
+      if (!data.success) return showToast('Неверный пароль!');
       isAdmin = true;
     }
-
     myNick = nick;
     socket.emit('register', { nick: myNick, isAdmin });
-    mainMenu.style.display = 'none';
+    document.getElementById('main-menu').style.display = 'none';
     document.getElementById('game-ui').style.display = 'block';
     document.getElementById('my-nick-display').innerText = myNick;
-
     if (isAdmin) {
       document.getElementById('admin-btn').style.display = 'inline-flex';
       document.getElementById('event-btn').style.display = 'inline-flex';
     }
-
+    renderInventory();
     socket.emit('joinWorld', myNick);
     resizeCanvas();
     requestAnimationFrame(renderLoop);
   }
-  socket.on('worldState', (world) => {
-    worldData = world;
-    if (world.eventActive) document.getElementById('event-btn').style.display = 'inline-flex';
+  // Сетевые события
+  socket.on('worldState', (w) => {
+    worldData = w;
+    if (w.eventActive) document.getElementById('event-btn').style.display = 'inline-flex';
   });
-  socket.on('playersList', (list) => { players = {}; list.forEach(p => { players[p.id] = p; }); });
-  socket.on('playerMoved', (p) => { players[p.id] = p; });
-  socket.on('playerUpdated', (p) => { players[p.id] = p; });
+  socket.on('playersList', (list) => {
+    players = {};
+    list.forEach(p => {
+      if (p.nick !== myNick) players[p.id] = { ...p, currX: p.x, currY: p.y };
+    });
+  });
+  // Получаем только конечную точку друга и плавно двигаем его локально
+  socket.on('playerTarget', ({ id, targetX, targetY, inBoat, hasOctopus }) => {
+    if (players[id]) {
+      players[id].targetX = targetX;
+      players[id].targetY = targetY;
+      players[id].inBoat = inBoat;
+      players[id].hasOctopus = hasOctopus;
+    }
+  });
+  socket.on('playerUpdated', (p) => { if (players[p.id]) players[p.id].nick = p.nick; });
   socket.on('playerLeft', (id) => { delete players[id]; });
   socket.on('tileUpdated', ({ key, tile }) => { worldData.tiles[key] = tile; });
-
   socket.on('receiveInvite', ({ fromNick, worldId }) => {
     if (confirm(`Игрок ${fromNick} приглашает вас в свой мир! Перейти?`)) {
       socket.emit('joinWorld', worldId);
-      showToast(`Вы перешли в мир игрока ${fromNick}`);
+      myPos = { x: 12, y: 12, targetX: 12, targetY: 12, inBoat: false };
     }
   });
-
   socket.on('adminReward', ({ resource, amount }) => {
     stats[resource] = (stats[resource] || 0) + amount;
     updateUI();
-    showToast(`Администратор выдал: +${amount} (${resource})`);
+    showToast(`Админ выдал: +${amount} (${resource})`);
   });
-
-  socket.on('eventStatus', (active) => {
-    worldData.eventActive = active;
-    document.getElementById('event-btn').style.display = (active || isAdmin) ? 'inline-flex' : 'none';
-    showToast(active ? 'Ивент-мир открыт!' : 'Ивент-мир закрыт.');
+  socket.on('eventStatus', (act) => {
+    worldData.eventActive = act;
+    document.getElementById('event-btn').style.display = (act || isAdmin) ? 'inline-flex' : 'none';
   });
+  socket.on('notify', (m) => showToast(m));
 
-  socket.on('notify', (msg) => showToast(msg));
-
-  document.querySelectorAll('.tool-btn').forEach(btn => {
+  // Переключение категорий (только SVG)
+  document.querySelectorAll('.cat-btn').forEach(btn => {
     btn.onclick = () => {
-      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-      currentTool = btn.dataset.tool;
+      currentCat = btn.dataset.cat;
+      document.getElementById('build-drawer').style.display = (currentCat === 'build') ? 'flex' : 'none';
     };
   });
 
-  function sendInvite() {
-    const target = document.getElementById('invite-nick-input').value.trim();
-    if (target) socket.emit('invitePlayer', target);
+  // --- Мини-игра Рыбалка (Ожидание + Кликер + Редкости) ---
+  let fishState = 'idle', fishProgress = 0, fishTimer = null, fishDecay = null;
+
+  function startFishingProcess() {
+    if (!inventory.find(i => i.id === 'rod').owned) return showToast('Нужна Удочка! Скрафтите её на верстаке.');
+    if (stats.energy < 2) return showToast('Мало энергии!');
+    stats.energy -= 2;
+    updateUI();
+
+    fishState = 'waiting';
+    fishProgress = 25;
+    document.getElementById('fish-status-title').innerText = 'Поплавок в воде...';
+    document.getElementById('fish-hint').innerText = 'Ждите поклёвку (2-4 сек)...';
+    document.getElementById('fish-click-btn').style.display = 'none';
+    document.getElementById('fish-bar').style.width = '0%';
+    openModal('fish-modal');
+
+    const waitMs = 2000 + Math.random() * 2000;
+    fishTimer = setTimeout(() => {
+      fishState = 'biting';
+      document.getElementById('fish-status-title').innerText = 'КЛЮЁТ! ЖМИТЕ НА КНОПКУ!';
+      document.getElementById('fish-hint').innerText = 'Заполните шкалу до 100%, пока рыба не сорвалась!';
+      document.getElementById('fish-click-btn').style.display = 'block';
+
+      fishDecay = setInterval(() => {
+        fishProgress -= 4;
+        document.getElementById('fish-bar').style.width = Math.max(0, fishProgress) + '%';
+        if (fishProgress <= 0) {
+          cancelFishing();
+          showToast('Рыба сорвалась с крючка!');
+        }
+      }, 120);
+    }, waitMs);
+  }
+
+  function fishClick() {
+    if (fishState !== 'biting') return;
+    fishProgress += 14;
+    document.getElementById('fish-bar').style.width = Math.min(100, fishProgress) + '%';
+    if (fishProgress >= 100) {
+      cancelFishing();
+      const roll = Math.random();
+      if (!stats.hasOctopus && roll < 0.22) {
+        stats.hasOctopus = true;
+        socket.emit('moveTarget', { targetX: myPos.targetX, targetY: myPos.targetY, inBoat: myPos.inBoat, hasOctopus: true });
+        showToast('ЛЕГЕНДАРНЫЙ УЛОВ! Вы поймали Осьминога-друга!');
+      } else if (roll < 0.48) {
+        stats.shells += 3;
+        showToast('РЕДКИЙ УЛОВ! Сундук с ракушками (+3 ракушки)');
+      } else if (roll < 0.75) {
+        stats.food += 5;
+        showToast('Редкий Тунец (+5 Еды)');
+      } else {
+        stats.food += 2;
+        showToast('Обычный Карась (+2 Еды)');
+      }
+      updateUI();
+    }
+  }
+
+  function cancelFishing() {
+    fishState = 'idle';
+    clearTimeout(fishTimer);
+    clearInterval(fishDecay);
     closeModals();
   }
 
+  // Прочие функции UI
+  function sendInvite() {
+    const t = document.getElementById('invite-nick-input').value.trim();
+    if (t) socket.emit('invitePlayer', t);
+    closeModals();
+  }
   function changeNick() {
     const n = document.getElementById('new-nick-input').value.trim();
-    if (n && n !== 'HELM77ZX') {
-      myNick = n;
-      document.getElementById('my-nick-display').innerText = myNick;
-      socket.emit('changeNick', myNick);
-      showToast('Ник изменён!');
-    }
+    if (n && n !== 'HELM77ZX') { myNick = n; document.getElementById('my-nick-display').innerText = n; socket.emit('changeNick', n); }
     closeModals();
   }
-
   function adminCmd(type, payload) {
-    const targetNick = document.getElementById('admin-target-nick').value.trim();
-    socket.emit('adminAction', { type, targetNick, payload });
+    socket.emit('adminAction', { type, targetNick: document.getElementById('admin-target-nick').value.trim(), payload });
   }
-
   function doEventMission() {
     if (stats.energy < 5) return showToast('Мало энергии!');
-    stats.energy -= 5;
-    stats.shells += 5;
-    updateUI();
-    showToast('Миссия выполнена! Получено +5 ракушек.');
+    stats.energy -= 5; stats.shells += 5; updateUI(); showToast('+5 ракушек!');
   }
-
-  function buyEventReward(type) {
-    if (type === 'deco' && stats.shells >= 10) {
-      stats.shells -= 10;
-      socket.emit('tileAction', { x: myPos.x, y: myPos.y, action: 'build', item: 'fountain' });
-      showToast('Золотой фонтан установлен!');
-    } else if (type === 'skin' && stats.shells >= 15) {
-      stats.shells -= 15;
-      gooseColor = '#f1c40f';
-      showToast('Открыт образ: Королевский Гусь!');
-    } else {
-      showToast('Недостаточно ракушек!');
-    }
-    updateUI();
+  function buyEventSkin() {
+    if (stats.shells >= 15) { stats.shells -= 15; gooseColor = '#f1c40f'; updateUI(); showToast('Королевский Гусь открыт!'); }
+    else showToast('Нужно 15 ракушек!');
   }
-
   function openModal(id) { document.getElementById(id).style.display = 'block'; }
   function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
-
   function showToast(msg) {
-    const t = document.getElementById('toast');
-    t.innerText = msg;
-    t.style.display = 'block';
+    const t = document.getElementById('toast'); t.innerText = msg; t.style.display = 'block';
     setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
-
   function updateUI() {
     document.getElementById('res-energy').innerText = stats.energy;
     document.getElementById('res-wood').innerText = stats.wood;
@@ -394,28 +551,29 @@
     document.getElementById('res-shells').innerText = stats.shells;
     if (stats.hasOctopus) document.getElementById('pet-badge').style.display = 'inline-flex';
   }
-
+  // --- Псевдо-3D Изометрический рендер и следящая камера ---
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
-  const TILE_W = 64, TILE_H = 32;
+  const TILE_W = 68, TILE_H = 34;
 
   function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
   window.addEventListener('resize', resizeCanvas);
 
   function isoToScreen(gx, gy) {
+    const relX = gx - camPos.x;
+    const relY = gy - camPos.y;
     return {
-      x: (canvas.width / 2) + (gx - gy) * (TILE_W / 2),
-      y: 120 + (gx + gy) * (TILE_H / 2)
+      x: (canvas.width / 2) + (relX - relY) * (TILE_W / 2),
+      y: (canvas.height / 2) + (relX + relY) * (TILE_H / 2)
     };
   }
 
   function screenToIso(sx, sy) {
     const adjX = sx - (canvas.width / 2);
-    const adjY = sy - 120;
-    return {
-      x: Math.floor((adjY / (TILE_H / 2) + adjX / (TILE_W / 2)) / 2),
-      y: Math.floor((adjY / (TILE_H / 2) - adjX / (TILE_W / 2)) / 2)
-    };
+    const adjY = sy - (canvas.height / 2);
+    const relX = (adjY / (TILE_H / 2) + adjX / (TILE_W / 2)) / 2;
+    const relY = (adjY / (TILE_H / 2) - adjX / (TILE_W / 2)) / 2;
+    return { x: Math.floor(relX + camPos.x), y: Math.floor(relY + camPos.y) };
   }
 
   canvas.addEventListener('click', (e) => {
@@ -423,51 +581,118 @@
     const tile = worldData.tiles[`${x},${y}`];
     if (!tile) return;
 
-    if (currentTool === 'move' && tile.type !== 'water') {
-      myPos = { x, y };
-      socket.emit('move', { x, y, hasOctopus: stats.hasOctopus });
+    if (tile.type === 'workbench') {
+      openModal('craft-modal');
       return;
     }
 
-    if (stats.energy <= 0) return showToast('Нет энергии!');
+    const hasBoat = inventory.find(i => i.id === 'boat').owned;
+    const hasShovel = inventory.find(i => i.id === 'shovel').owned;
+    const hasAxe = inventory.find(i => i.id === 'axe').owned;
+    const hasHammer = inventory.find(i => i.id === 'hammer').owned;
 
-    if (currentTool === 'fish' && tile.type === 'water') {
-      stats.energy -= 2;
-      if (!stats.hasOctopus && Math.random() < 0.45) {
-        stats.hasOctopus = true;
-        showToast('Ура! Вы выловили Осьминога! Теперь это ваш друг!');
-        socket.emit('move', { x: myPos.x, y: myPos.y, hasOctopus: true });
-      } else {
-        stats.food += 2;
-        showToast('Вы поймали рыбу (+2 Еды)');
+    // 1. Передвижение (по земле или на лодке по воде)
+    if (currentCat === 'move') {
+      if (tile.type === 'water' && !hasBoat) {
+        return showToast('Скрафтите Лодку на столе крафтов, чтобы плыть по воде!');
       }
-    } else if (currentTool === 'plow' && tile.type === 'grass') {
-      stats.energy -= 1;
-      socket.emit('tileAction', { x, y, action: 'plow' });
-    } else if (currentTool === 'plant' && tile.type === 'soil') {
-      if (tile.stage >= 3) {
-        stats.food += 4; stats.energy += 5;
-        socket.emit('tileAction', { x, y, action: 'harvest' });
-        showToast('Урожай собран! (+4 Еды, +5 Энергии)');
-      } else {
+      myPos.targetX = x;
+      myPos.targetY = y;
+      myPos.inBoat = (tile.type === 'water');
+      socket.emit('moveTarget', { targetX: x, targetY: y, inBoat: myPos.inBoat, hasOctopus: stats.hasOctopus });
+      return;
+    }
+
+    const dist = Math.hypot(x - myPos.x, y - myPos.y);
+    if (dist > 2.6) {
+      myPos.targetX = x;
+      myPos.targetY = y;
+      socket.emit('moveTarget', { targetX: x, targetY: y, inBoat: myPos.inBoat, hasOctopus: stats.hasOctopus });
+      return showToast('Подойдите ближе к месту действия!');
+    }
+
+    // 2. Рыбалка (только в 1-2 блоках от воды)
+    if (currentCat === 'fish') {
+      if (tile.type !== 'water') return showToast('Нажмите на воду рядом с берегом!');
+      if (dist > 2.2) return showToast('Подойдите к краю берега (1-2 блока)!');
+      startFishingProcess();
+      return;
+    }
+
+    if (stats.energy <= 0) return showToast('Нет энергии! Соберите урожай или порыбачьте.');
+
+    // 3. Лопата (тропинки, на которых не растут деревья, и грядки)
+    if (currentCat === 'dig') {
+      if (!hasShovel) return showToast('Скрафтите Лопату на столе крафтов!');
+      if (tile.type === 'grass') {
+        stats.energy -= 1;
+        socket.emit('tileAction', { x, y, action: 'path' });
+        showToast('Проложена тропинка (деревья здесь не вырастут)');
+      } else if (tile.type === 'path') {
+        stats.energy -= 1;
+        socket.emit('tileAction', { x, y, action: 'plow' });
+      }
+    }
+    // 4. Ферма
+    else if (currentCat === 'farm') {
+      if (tile.type === 'soil' && !tile.crop) {
         socket.emit('tileAction', { x, y, action: 'plant', item: 'carrot' });
+      } else if (tile.crop && tile.stage < 3 && stats.water > 0) {
+        stats.water -= 1;
+        socket.emit('tileAction', { x, y, action: 'water' });
+      } else if (tile.crop && tile.stage >= 3) {
+        stats.food += 4; stats.energy += 8;
+        socket.emit('tileAction', { x, y, action: 'harvest' });
+        showToast('Урожай собран (+4 Еды, +8 Энергии)');
       }
-    } else if (currentTool === 'water' && tile.crop && stats.water > 0) {
-      stats.water -= 1;
-      socket.emit('tileAction', { x, y, action: 'water' });
-    } else if (currentTool === 'chop' && tile.type === 'tree') {
-      stats.energy -= 2; stats.wood += 5;
+    }
+    // 5. Рубка 3D-деревьев
+    else if (currentCat === 'chop' && tile.type === 'tree') {
+      if (!hasAxe) return showToast('Скрафтите Топор на столе крафтов!');
+      stats.energy -= 2; stats.wood += 6;
       socket.emit('tileAction', { x, y, action: 'chop' });
-      showToast('Дерево срублено (+5 Дров)');
-    } else if (currentTool === 'build' && tile.type === 'grass' && stats.wood >= 3) {
-      stats.wood -= 3;
-      socket.emit('tileAction', { x, y, action: 'build', item: 'fence' });
+      showToast('+6 Дров');
+    }
+    // 6. 3D-Строительство по чертежам
+    else if (currentCat === 'build') {
+      if (!hasHammer) return showToast('Скрафтите Молоток на столе крафтов!');
+      if (blueprint.item === 'bridge' && tile.type !== 'water') return showToast('Мостик строится только на воде!');
+      if (blueprint.item !== 'bridge' && tile.type !== 'grass') return showToast('Строить можно только на свободной траве!');
+      if (stats.wood < blueprint.wood || stats.energy < blueprint.energy) {
+        return showToast(`Нужно: ${blueprint.wood} дров и ${blueprint.energy} энергии!`);
+      }
+      stats.wood -= blueprint.wood;
+      stats.energy -= blueprint.energy;
+      socket.emit('tileAction', { x, y, action: 'build', item: blueprint.item, buildTime: blueprint.time });
+      showToast('Строительство началось...');
     }
     updateUI();
   });
 
+  function draw3DBox(cx, cy, w, h, d, colTop, colLeft, colRight) {
+    ctx.fillStyle = colTop;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy - d - h); ctx.lineTo(cx + w, cy - d);
+    ctx.lineTo(cx, cy - d + h); ctx.lineTo(cx - w, cy - d);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = colLeft;
+    ctx.beginPath();
+    ctx.moveTo(cx - w, cy - d); ctx.lineTo(cx, cy - d + h);
+    ctx.lineTo(cx, cy + h); ctx.lineTo(cx - w, cy);
+    ctx.closePath(); ctx.fill();
+
+    ctx.fillStyle = colRight;
+    ctx.beginPath();
+    ctx.moveTo(cx + w, cy - d); ctx.lineTo(cx, cy - d + h);
+    ctx.lineTo(cx, cy + h); ctx.lineTo(cx + w, cy);
+    ctx.closePath(); ctx.fill();
+  }
+
   function drawIsoTile(gx, gy, tile) {
     const { x, y } = isoToScreen(gx, gy);
+    if (x < -100 || x > canvas.width + 100 || y < -100 || y > canvas.height + 100) return;
+
     ctx.beginPath();
     ctx.moveTo(x, y);
     ctx.lineTo(x + TILE_W / 2, y + TILE_H / 2);
@@ -475,52 +700,84 @@
     ctx.lineTo(x - TILE_W / 2, y + TILE_H / 2);
     ctx.closePath();
 
-    ctx.fillStyle = tile.type === 'water' ? '#2980b9' : (tile.type === 'soil' ? '#6e2c00' : '#2ecc71');
+    if (tile.type === 'water') ctx.fillStyle = '#2471a3';
+    else if (tile.type === 'path') ctx.fillStyle = '#d5c4a1';
+    else if (tile.type === 'soil') ctx.fillStyle = '#6e2c00';
+    else if (tile.type === 'bridge') ctx.fillStyle = '#a04000';
+    else ctx.fillStyle = '#27ae60';
+
     ctx.fill();
-    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)';
     ctx.stroke();
 
-    if (tile.type === 'tree') {
-      ctx.fillStyle = '#7e5109'; ctx.fillRect(x - 4, y - 12, 8, 18);
-      ctx.fillStyle = '#196f3d'; ctx.beginPath(); ctx.arc(x, y - 16, 14, 0, Math.PI * 2); ctx.fill();
+    const cy = y + TILE_H / 2;
+
+    if (tile.type === 'workbench') {
+      draw3DBox(x, cy, 16, 8, 12, '#e67e22', '#ba4a00', '#a04000');
+    } else if (tile.type === 'tree') {
+      draw3DBox(x, cy, 5, 3, 18, '#6e2c00', '#512e5f', '#4a235a');
+      draw3DBox(x, cy - 16, 18, 9, 14, '#2ecc71', '#239b56', '#1d8348');
+      draw3DBox(x, cy - 28, 12, 6, 12, '#58d68d', '#28b463', '#239b56');
+    } else if (tile.type === 'constructing') {
+      const h = 4 + (tile.buildProgress || 0.2) * 24;
+      draw3DBox(x, cy, 14, 7, h, '#f39c12', '#d68910', '#b9770e');
     } else if (tile.type === 'fence') {
-      ctx.fillStyle = '#d35400'; ctx.fillRect(x - 10, y - 6, 20, 12);
-    } else if (tile.type === 'fountain') {
-      ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(x, y + 4, 12, 0, Math.PI * 2); ctx.fill();
+      draw3DBox(x, cy, 14, 7, 10, '#d35400', '#a04000', '#873600');
+    } else if (tile.type === 'gazebo') {
+      draw3DBox(x, cy, 20, 10, 4, '#d5dbdb', '#aeb6bf', '#85929e');
+      draw3DBox(x, cy - 18, 22, 11, 10, '#e74c3c', '#c0392b', '#922b21');
+    } else if (tile.type === 'lighthouse') {
+      draw3DBox(x, cy, 16, 8, 32, '#ecf0f1', '#bdc3c7', '#95a5a6');
+      draw3DBox(x, cy - 32, 12, 6, 10, '#f1c40f', '#f39c12', '#d68910');
     } else if (tile.crop) {
-      ctx.fillStyle = tile.stage >= 3 ? '#e67e22' : '#a9dfbf';
-      ctx.beginPath(); ctx.arc(x, y + 8, 4 + tile.stage * 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = tile.stage >= 3 ? '#e67e22' : '#abebc6';
+      ctx.beginPath(); ctx.arc(x, cy, 4 + tile.stage * 2.2, 0, Math.PI * 2); ctx.fill();
     }
   }
 
-  function drawGooseAndOctopus(gx, gy, nick, color, hasOcto) {
+  function drawCharacter(gx, gy, nick, color, inBoat, hasOcto) {
     const { x, y } = isoToScreen(gx, gy);
+    const cy = y + TILE_H / 2;
+
+    if (inBoat) draw3DBox(x, cy + 2, 18, 9, 6, '#a04000', '#7e5109', '#6e2c00');
     if (hasOcto) {
-      ctx.fillStyle = '#9b59b6'; ctx.beginPath(); ctx.arc(x - 16, y + 6, 8, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = '#fff'; ctx.fillRect(x - 19, y + 4, 2, 2); ctx.fillRect(x - 15, y + 4, 2, 2);
+      ctx.fillStyle = '#8e44ad';
+      ctx.beginPath(); ctx.arc(x - 16, cy - 2, 7, 0, Math.PI * 2); ctx.fill();
     }
     ctx.fillStyle = color;
-    ctx.beginPath(); ctx.ellipse(x, y + 4, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
-    ctx.fillRect(x + 3, y - 12, 5, 14);
-    ctx.beginPath(); ctx.arc(x + 6, y - 13, 5, 0, Math.PI * 2); ctx.fill();
-    ctx.fillStyle = '#e67e22'; ctx.fillRect(x + 9, y - 14, 6, 3);
+    ctx.beginPath(); ctx.ellipse(x, cy - 4, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x + 3, cy - 18, 5, 14);
+    ctx.beginPath(); ctx.arc(x + 6, cy - 19, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e67e22'; ctx.fillRect(x + 9, cy - 20, 6, 3);
 
     ctx.fillStyle = '#ffffff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(nick, x, y - 24);
+    ctx.fillText(nick, x, cy - 30);
   }
 
   function renderLoop() {
+    myPos.x += (myPos.targetX - myPos.x) * 0.08;
+    myPos.y += (myPos.targetY - myPos.y) * 0.08;
+    camPos.x += (myPos.x - camPos.x) * 0.1;
+    camPos.y += (myPos.y - camPos.y) * 0.1;
+
+    Object.values(players).forEach(p => {
+      p.currX += (p.targetX - p.currX) * 0.08;
+      p.currY += (p.targetY - p.currY) * 0.08;
+    });
+
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    for (let gx = 0; gx < 20; gx++) {
-      for (let gy = 0; gy < 20; gy++) {
+    for (let gx = 0; gx < worldData.size; gx++) {
+      for (let gy = 0; gy < worldData.size; gy++) {
         const tile = worldData.tiles[`${gx},${gy}`];
         if (tile) drawIsoTile(gx, gy, tile);
       }
     }
     Object.values(players).forEach(p => {
-      if (p.nick !== myNick) drawGooseAndOctopus(p.x, p.y, p.nick, '#ecf0f1', p.hasOctopus);
+      drawCharacter(p.currX, p.currY, p.nick, '#ecf0f1', p.inBoat, p.hasOctopus);
     });
-    if (myNick) drawGooseAndOctopus(myPos.x, myPos.y, myNick, gooseColor, stats.hasOctopus);
+    if (myNick) {
+      drawCharacter(myPos.x, myPos.y, myNick, gooseColor, myPos.inBoat, stats.hasOctopus);
+    }
     requestAnimationFrame(renderLoop);
   }
 </script>
