@@ -1,47 +1,75 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <style>
-        body {
-            background: #1a1a2e;
-            color: #ffd700;
-            font-family: 'Courier New', monospace;
-            padding: 10px;
-            margin: 0;
-            border: 2px solid #ffd700;
-        }
-        h3 { margin: 0 0 10px 0; text-align: center; text-shadow: 0 0 5px #ff8c00; }
-        .row { display: flex; gap: 5px; margin-bottom: 8px; }
-        input {
-            background: #0f3460; border: 1px solid #ffd700; color: #fff;
-            padding: 5px; flex: 1; font-family: inherit;
-        }
-        button {
-            background: #ffd700; color: #000; border: none; padding: 5px 10px;
-            font-weight: bold; cursor: pointer; font-family: inherit;
-        }
-        button:hover { background: #ffea00; }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Админ-виджет — ГУСИ! MMO</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <style>
+    body { background: #1a252f; color: #ecf0f1; font-family: 'Segoe UI', sans-serif; padding: 20px; }
+    .card { background: #2c3e50; padding: 24px; border-radius: 14px; max-width: 440px; margin: 30px auto; border: 2px solid #e74c3c; box-shadow: 0 10px 25px rgba(0,0,0,0.4); }
+    h2 { color: #e74c3c; margin-top: 0; display: flex; align-items: center; gap: 10px; font-size: 20px; }
+    .svg-icon { width: 22px; height: 22px; fill: currentColor; }
+    input { width: 100%; padding: 11px; margin: 8px 0 14px; border-radius: 8px; border: 1px solid #34495e; background: #1a252f; color: #fff; box-sizing: border-box; font-size: 15px; }
+    button { width: 100%; padding: 11px; margin: 6px 0; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; color: white; font-size: 14px; transition: 0.15s; }
+    button:hover { opacity: 0.9; }
+    .btn-login { background: #e74c3c; }
+    .btn-act { background: #27ae60; }
+    .btn-ev { background: #8e44ad; }
+    #status { margin-top: 12px; font-size: 13px; color: #f1c40f; text-align: center; min-height: 18px; }
+  </style>
 </head>
 <body>
-    <h3>👑 OWNER PANEL: HELM77ZX</h3>
-    <div class="row">
-        <input type="number" id="lvlInput" placeholder="Уровень (напр. 150)">
-        <button onclick="sendCmd('set_level', document.getElementById('lvlInput').value)">Выдать LVL</button>
-    </div>
-    <div class="row">
-        <button style="width:100%" onclick="sendCmd('give_god_rod', 1)">Выдать Админ-снасти (99999 кг)</button>
-    </div>
-    <div class="row">
-        <input type="text" id="msgInput" placeholder="Глобальное объявление...">
-        <button onclick="sendCmd('announce', document.getElementById('msgInput').value)">В чат</button>
-    </div>
+  <svg style="display:none;" xmlns="http://w3.org">
+    <symbol id="ic-crown" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></symbol>
+    <symbol id="ic-lock" viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></symbol>
+  </svg>
 
-    <script>
-        function sendCmd(cmd, value) {
-            window.parent.postMessage({ type: 'ADMIN_CMD', cmd, value }, '*');
-        }
-    </script>
+  <div class="card" id="login-box">
+    <h2><svg class="svg-icon"><use href="#ic-lock"/></svg>Вход в виджет HELM77ZX</h2>
+    <input type="password" id="pass" placeholder="Пароль из secret.json">
+    <button class="btn-login" onclick="auth()">Подключиться к серверу</button>
+    <div id="login-err" style="color:#e74c3c; font-size:13px; margin-top:8px;"></div>
+  </div>
+
+  <div class="card" id="panel-box" style="display:none;">
+    <h2><svg class="svg-icon"><use href="#ic-crown"/></svg>Управление сервером (Порт 4545)</h2>
+    <input type="text" id="target" placeholder="Ник игрока (например, Player1)">
+    <button class="btn-act" onclick="send('giveResources', {resource:'wood', amount:100})">Выдать +100 Дров</button>
+    <button class="btn-act" onclick="send('giveResources', {resource:'water', amount:100})">Выдать +100 Воды</button>
+    <button class="btn-act" onclick="send('giveResources', {resource:'food', amount:100})">Выдать +100 Еды</button>
+    <button class="btn-act" onclick="send('giveEnergy', {amount:200})">Восстановить Энергию (+200)</button>
+    <button class="btn-ev" onclick="send('unlockLocation', {zone:'north'})">Открыть новую локацию</button>
+    <button class="btn-ev" onclick="send('toggleEvent', {})">Запустить / Остановить Ивент-мир</button>
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const socket = io();
+    async function auth() {
+      const password = document.getElementById('pass').value;
+      const res = await fetch('/api/auth-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nick: 'HELM77ZX', password })
+      });
+      const data = await res.json();
+      if (data.success) {
+        socket.emit('register', { nick: 'HELM77ZX_WIDGET', isAdmin: true });
+        document.getElementById('login-box').style.display = 'none';
+        document.getElementById('panel-box').style.display = 'block';
+      } else {
+        document.getElementById('login-err').innerText = 'Неверный пароль администратора!';
+      }
+    }
+
+    function send(type, payload) {
+      const targetNick = document.getElementById('target').value.trim();
+      socket.emit('adminAction', { type, targetNick, payload });
+      const st = document.getElementById('status');
+      st.innerText = `Команда "${type}" отправлена для ${targetNick || 'выбранного мира'}.`;
+      setTimeout(() => { st.innerText = ''; }, 3000);
+    }
+  </script>
 </body>
 </html>
