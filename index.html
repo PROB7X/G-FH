@@ -3,601 +3,526 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Pixel Fishing MMO</title>
+  <title>Гуси! — Онлайн Остров</title>
   <script src="/socket.io/socket.io.js"></script>
   <style>
-    * { box-sizing: border-box; user-select: none; margin: 0; padding: 0; }
-    body { background: #111; color: #fff; font-family: 'Courier New', monospace; overflow: hidden; }
-    canvas { display: block; image-rendering: pixelated; }
-    #fs-overlay, .modal { position: fixed; inset: 0; background: rgba(10,15,25,0.95); z-index: 9000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 20px; }
-    #fs-overlay { z-index: 10000; }
-    #fs-close { position: absolute; top: 15px; right: 20px; color: #aaa; background: none; border: none; cursor: pointer; }
-    .btn { background: #2ecc71; color: #000; border: 2px solid #27ae60; padding: 10px 20px; font-size: 15px; font-weight: bold; cursor: pointer; border-radius: 6px; margin-top: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
-    .hidden { display: none !important; }
-    input { padding: 10px; font-size: 16px; margin: 6px 0; background: #222; color: #fff; border: 2px solid #555; width: 250px; text-align: center; }
-    #top-left-bar { position: fixed; top: 10px; left: 10px; z-index: 150; }
-    .leave-btn { background: rgba(231, 76, 60, 0.85); color: #fff; border: 2px solid #c0392b; padding: 7px 12px; border-radius: 6px; font-family: inherit; font-size: 12px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 6px; }
-    #hud { position: fixed; top: 10px; right: 10px; z-index: 100; background: rgba(0,0,0,0.75); padding: 8px; border: 2px solid #444; border-radius: 6px; font-size: 12px; text-align: right; }
-    .s-btn { background: #3498db; color: #fff; border: none; padding: 6px 10px; margin-top: 4px; cursor: pointer; border-radius: 4px; display: inline-flex; align-items: center; gap: 5px; font-family: inherit; font-size: 12px; }
-    #mobile-controls { position: fixed; bottom: 15px; left: 15px; right: 15px; z-index: 100; display: flex; justify-content: space-between; pointer-events: none; }
-    .grp { display: flex; gap: 10px; pointer-events: auto; align-items: flex-end; }
-    .dpad { display: grid; grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(2, 52px); gap: 6px; }
-    .m-btn { width: 56px; height: 56px; background: rgba(255,255,255,0.2); border: 2px solid #fff; border-radius: 10px; color: #fff; font-size: 13px; font-weight: bold; display: flex; align-items: center; justify-content: center; }
-    .m-btn:active { background: rgba(255,255,255,0.45); }
-    .win { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 88%; max-width: 580px; height: 78%; background: #1e272e; border: 3px solid #808e9b; z-index: 2000; padding: 15px; overflow-y: auto; border-radius: 8px; }
-    .card { background: #2f3640; padding: 8px; margin: 5px 0; border-left: 4px solid #00a8ff; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
-    #game-toast { position: fixed; top: 55px; left: 50%; transform: translateX(-50%); background: rgba(15, 20, 30, 0.92); border: 2px solid #2ecc71; color: #fff; padding: 10px 18px; border-radius: 6px; z-index: 8500; font-size: 13px; text-align: center; pointer-events: none; }
-    #custom-confirm { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #1e272e; border: 3px solid gold; padding: 20px; border-radius: 8px; z-index: 8800; text-align: center; width: 320px; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; user-select: none; }
+    body, html { width: 100%; height: 100%; overflow: hidden; background: #1e3a2f; color: #fff; }
+
+    .svg-icon { width: 18px; height: 18px; vertical-align: middle; fill: currentColor; flex-shrink: 0; }
+    .svg-title { width: 32px; height: 32px; vertical-align: middle; fill: currentColor; margin-right: 8px; }
+
+    #fs-overlay {
+      position: fixed; inset: 0; background: rgba(15, 30, 24, 0.96);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 9999; text-align: center; padding: 20px;
+    }
+    #fs-close {
+      position: absolute; top: 20px; right: 25px; cursor: pointer;
+      background: rgba(255,255,255,0.12); width: 46px; height: 46px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; transition: 0.2s;
+    }
+    #fs-close:hover { background: #e74c3c; }
+    .btn-primary {
+      background: linear-gradient(135deg, #f39c12, #e67e22); border: none; color: white;
+      padding: 16px 36px; font-size: 20px; font-weight: bold; border-radius: 14px;
+      cursor: pointer; box-shadow: 0 6px 0 #b95e0e; margin-top: 20px; transition: 0.1s;
+      display: inline-flex; align-items: center; gap: 10px;
+    }
+    .btn-primary:active { transform: translateY(4px); box-shadow: 0 2px 0 #b95e0e; }
+
+    #main-menu {
+      position: fixed; inset: 0; background: radial-gradient(circle, #2ecc71 0%, #145a32 100%);
+      display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 500;
+    }
+    .menu-card {
+      background: rgba(255, 255, 255, 0.96); color: #2c3e50; padding: 30px; border-radius: 20px;
+      width: 90%; max-width: 400px; text-align: center; box-shadow: 0 15px 35px rgba(0,0,0,0.4);
+    }
+    .menu-card h1 { color: #d35400; margin-bottom: 8px; font-size: 30px; display: flex; align-items: center; justify-content: center; }
+    .menu-card input {
+      width: 100%; padding: 12px; margin: 10px 0; border: 2px solid #bdc3c7;
+      border-radius: 10px; font-size: 16px; text-align: center;
+    }
+    .menu-buttons { display: flex; gap: 10px; margin-top: 15px; }
+    .menu-buttons button {
+      flex: 1; padding: 14px; border: none; border-radius: 10px; font-size: 15px;
+      font-weight: bold; color: white; cursor: pointer;
+    }
+    .btn-solo { background: #27ae60; }
+    .btn-coop { background: #2980b9; }
+
+    #game-ui { display: none; width: 100%; height: 100%; position: relative; }
+    canvas { display: block; width: 100%; height: 100%; background: #3498db; }
+
+    .top-bar {
+      position: absolute; top: 10px; left: 10px; right: 10px;
+      display: flex; flex-wrap: wrap; gap: 8px; justify-content: space-between; pointer-events: none;
+    }
+    .res-group { display: flex; gap: 8px; pointer-events: auto; flex-wrap: wrap; }
+    .badge {
+      background: rgba(0,0,0,0.75); padding: 6px 12px; border-radius: 20px;
+      font-size: 14px; font-weight: bold; border: 1px solid rgba(255,255,255,0.2);
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .action-btn {
+      background: #8e44ad; color: white; border: none; padding: 6px 14px;
+      border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 13px;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+
+    .bottom-bar {
+      position: absolute; bottom: 15px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; background: rgba(0,0,0,0.8); padding: 8px;
+      border-radius: 18px; border: 2px solid #f1c40f; max-width: 96vw; overflow-x: auto;
+    }
+    .tool-btn {
+      background: #34495e; color: white; border: 2px solid transparent;
+      padding: 9px 12px; border-radius: 12px; cursor: pointer; font-size: 13px; font-weight: bold;
+      display: inline-flex; align-items: center; gap: 6px; white-space: nowrap;
+    }
+    .tool-btn.active { border-color: #f1c40f; background: #d35400; }
+
+    .modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      background: #2c3e50; padding: 20px; border-radius: 16px; border: 2px solid #f39c12;
+      z-index: 800; display: none; min-width: 310px; max-width: 90%;
+    }
+    .modal h3 { margin-bottom: 12px; color: #f1c40f; display: flex; align-items: center; gap: 8px; }
+    .modal input { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 8px; border: none; }
+    .modal button { padding: 9px 14px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-right: 5px; }
+
+    #toast {
+      position: fixed; top: 65px; left: 50%; transform: translateX(-50%);
+      background: rgba(230, 126, 34, 0.96); padding: 10px 20px; border-radius: 20px;
+      font-weight: bold; display: none; z-index: 1000;
+    }
   </style>
 </head>
 <body>
+<svg style="display:none;" xmlns="http://w3.org">
+  <symbol id="ic-close" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></symbol>
+  <symbol id="ic-fullscreen" viewBox="0 0 24 24"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></symbol>
+  <symbol id="ic-goose" viewBox="0 0 24 24"><path d="M16 3c-1.66 0-3 1.34-3 3 0 .81.33 1.54.85 2.08L11 11H6c-2.21 0-4 1.79-4 4 0 1.86 1.28 3.41 3 3.86V21h2v-2h4v2h2v-2.14c1.72-.45 3-2 3-3.86v-4.17l1.85-1.85c.54.02 1.15-.18 1.65-.68L22 6l-3-1c0-1.1-.9-2-2-2h-1z"/></symbol>
+  <symbol id="ic-energy" viewBox="0 0 24 24"><path d="M7 2v11h3v9l7-12h-4l4-8z"/></symbol>
+  <symbol id="ic-wood" viewBox="0 0 24 24"><path d="M19 5H5c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2zm0-4H7V9h10v2z"/></symbol>
+  <symbol id="ic-water" viewBox="0 0 24 24"><path d="M12 2c-5.33 4.55-8 8.48-8 11.8 0 4.98 3.8 8.2 8 8.2s8-3.22 8-8.2c0-3.32-2.67-7.25-8-11.8z"/></symbol>
+  <symbol id="ic-food" viewBox="0 0 24 24"><path d="M18.06 22.99h1.66c.84 0 1.53-.64 1.63-1.46L23 5.05h-5V1h-1.97v4.05h-4.97l.3 2.34c1.71.47 3.31 1.32 4.27 2.26 1.44 1.42 2.43 2.89 2.43 5.29v8.05zM1 21.99V21h15.03v.99c0 .55-.45 1-1.01 1H2.01c-.56 0-1.01-.45-1.01-1zm15.03-7c0-8-15.03-8-15.03 0h15.03zM1.02 17h15v2h-15z"/></symbol>
+  <symbol id="ic-shell" viewBox="0 0 24 24"><path d="M12 3C6.48 3 2 7.48 2 13c0 3.69 2.47 6.86 6 7.75V22h8v-1.25c3.53-.89 6-4.06 6-7.75 0-5.52-4.48-10-10-10zm0 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></symbol>
+  <symbol id="ic-octopus" viewBox="0 0 24 24"><path d="M12 2C7.58 2 4 5.58 4 10c0 2.38 1.04 4.51 2.68 5.97L5 21h2.5l1.5-3h1v4h2v-4h1l1.5 3H17l-1.68-5.03C16.96 14.51 18 12.38 18 10c0-4.42-3.58-8-8-8zm-2.5 9c-.83 0-1.5-.67-1.5-1.5S8.67 8 9.5 8s1.5.67 1.5 1.5S10.33 11 9.5 11zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 8 14.5 8s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></symbol>
+  <symbol id="ic-users" viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24"><path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/></symbol>
+  <symbol id="ic-crown" viewBox="0 0 24 24"><path d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .6-.4 1-1 1H6c-.6 0-1-.4-1-1v-1h14v1z"/></symbol>
+  <symbol id="ic-walk" viewBox="0 0 24 24"><path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3C14.8 12 16.8 13 19 13v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7"/></symbol>
+  <symbol id="ic-plow" viewBox="0 0 24 24"><path d="M14.79 10.62L3.5 21.9l-1.4-1.4L13.38 9.21l1.41 1.41zm4.48-6.49l-2.12-2.12-4.24 4.24 2.12 2.12 4.24-4.24z"/></symbol>
+  <symbol id="ic-plant" viewBox="0 0 24 24"><path d="M12 22c4.97 0 9-4.03 9-9-4.97 0-9 4.03-9 9zM5.6 10.25c0 1.38 1.12 2.5 2.5 2.5.53 0 1.01-.16 1.42-.44l-.02.19c0 1.38 1.12 2.5 2.5 2.5s2.5-1.12 2.5-2.5l-.02-.19c.4.28.89.44 1.42.44 1.38 0 2.5-1.12 2.5-2.5 0-1-.59-1.85-1.43-2.25.84-.4 1.43-1.25 1.43-2.25 0-1.38-1.12-2.5-2.5-2.5-.53 0-1.01.16-1.42.44l.02-.19C14.5 2.12 13.38 1 12 1S9.5 2.12 9.5 3.5l.02.19c-.4-.28-.89-.44-1.42-.44-1.38 0-2.5 1.12-2.5 2.5 0 1 .59 1.85 1.43 2.25-.84.4-1.43 1.25-1.43 2.25zM12 5.5c1.38 0 2.5 1.12 2.5 2.5s-1.12 2.5-2.5 2.5S9.5 9.38 9.5 8s1.12-2.5 2.5-2.5zM3 13c0 4.97 4.03 9 9 9 0-4.97-4.03-9-9-9z"/></symbol>
+  <symbol id="ic-axe" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></symbol>
+  <symbol id="ic-build" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></symbol>
+  <symbol id="ic-fish" viewBox="0 0 24 24"><path d="M12 20l4-4H8l4 4zm0-16L8 8h8l-4-4zm9 8c-2.5-3.5-6-5-9-5s-6.5 1.5-9 5c2.5 3.5 6 5 9 5s6.5-1.5 9-5z"/></symbol>
+</svg>
+
+<div id="toast"></div>
 
 <div id="fs-overlay">
-  <button id="fs-close" onclick="closeFs()"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#aaa" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
-  <h2>Разверните игру на весь экран</h2>
-  <p style="color:#aaa; margin-top:6px;">Экран перевернется в горизонтальный режим</p>
-  <button class="btn" onclick="openFs()">НА ВЕСЬ ЭКРАН</button>
-</div>
-
-<div id="login-modal" class="modal">
-  <h2>PIXEL FISHING MMO</h2>
-  <input id="nick-inp" placeholder="Ваш ник..." maxlength="16">
-  <input id="pass-inp" type="password" class="hidden" placeholder="Пароль из secret.json">
-  <button class="btn" onclick="doLogin()">ВОЙТИ</button>
-  <p id="err-txt" style="color:#ff4757; margin-top:8px;"></p>
-</div>
-
-<div id="srv-modal" class="modal hidden">
-  <h2>ВЫБОР СЕРВЕРА</h2>
-  <p style="color:#aaa; font-size:12px; margin-bottom:8px;">Основной сервер безлимитный, кастомные до 20 человек</p>
-  <div id="srv-list"></div>
-  <input id="new-srv-inp" placeholder="Имя своего сервера">
-  <button class="btn" onclick="startAds()">Создать сервер (2 рекламы)</button>
-</div>
-
-<div id="ad-modal" class="modal hidden">
-  <h3 id="ad-lbl">Реклама 1 из 2</h3>
-  <video id="ad-vid" width="320" height="180" playsinline style="border:2px solid #fff; margin:10px 0;"><source src="/1.mp4" type="video/mp4"></video>
-</div>
-<div id="top-left-bar" class="hidden">
-  <button class="leave-btn" onclick="leaveServer()">
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg>
-    <span>Выйти с сервера</span>
+  <div id="fs-close" title="Отказаться от полноэкранного режима">
+    <svg class="svg-icon" style="width:26px;height:26px;"><use href="#ic-close"/></svg>
+  </div>
+  <h1><svg class="svg-title"><use href="#ic-goose"/></svg>ГУСИ! Остров приключений</h1>
+  <p style="margin-top: 10px; opacity: 0.85;">Для лучшего погружения разверните игру на весь экран</p>
+  <button class="btn-primary" id="fs-enter-btn">
+    <svg class="svg-icon"><use href="#ic-fullscreen"/></svg> НА ВЕСЬ ЭКРАН
   </button>
 </div>
 
-<div id="hud" class="hidden">
-  <div id="hud-info"></div>
-  <button class="s-btn" onclick="openWin('inv-win')">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/></svg>
-    <span>Рюкзак</span>
-  </button>
-  <button class="s-btn" style="background:#f39c12;" onclick="openShop()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-    <span>Магазин</span>
-  </button>
-  <button class="s-btn" style="background:#e84118;" onclick="toggleLoc()">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c0 0-6 5.686-6 11a6 6 0 0 0 12 0c0-5.314-6-11-6-11zm0 15a2.5 2.5 0 0 1-2.5-2.5c0-1.9 2.5-4.5 2.5-4.5s2.5 2.6 2.5 4.5A2.5 2.5 0 0 1 12 17z"/></svg>
-    <span>Лава (100+ лвл)</span>
-  </button>
-</div>
-
-<div id="mobile-controls" class="hidden">
-  <div class="grp">
-    <div class="dpad">
-      <div></div>
-      <div class="m-btn" id="b-up" style="width:52px; height:52px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 8h16z"/></svg></div>
-      <div></div>
-      <div class="m-btn" id="b-left" style="width:52px; height:52px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M4 12l8-8v16z"/></svg></div>
-      <div class="m-btn" id="b-down" style="width:52px; height:52px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-8H4z"/></svg></div>
-      <div class="m-btn" id="b-right" style="width:52px; height:52px;"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M20 12l-8 8V4z"/></svg></div>
+<div id="main-menu">
+  <div class="menu-card">
+    <h1><svg class="svg-title"><use href="#ic-goose"/></svg>ГУСИ!</h1>
+    <p>Онлайн-ферма и приключения</p>
+    <input type="text" id="nick-input" placeholder="Введите ваш ник..." maxlength="16">
+    <input type="password" id="admin-pass-input" placeholder="Пароль администратора" style="display:none;">
+    <div class="menu-buttons">
+      <button class="btn-solo" onclick="startGame('solo')">Одиночная игра</button>
+      <button class="btn-coop" onclick="startGame('coop')">Вместе</button>
     </div>
   </div>
-  <div class="grp">
-    <div class="m-btn" id="b-use"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 10h18M10 10v4h4v-4"/></svg></div>
-    <div class="m-btn" id="b-act" style="width:105px; background:rgba(46,204,113,0.4);">ЗАБРОС</div>
+</div>
+
+<div id="game-ui">
+  <canvas id="gameCanvas"></canvas>
+
+  <div class="top-bar">
+    <div class="res-group">
+      <div class="badge"><svg class="svg-icon" style="color:#f1c40f"><use href="#ic-energy"/></svg><span id="res-energy">100</span></div>
+      <div class="badge"><svg class="svg-icon" style="color:#d35400"><use href="#ic-wood"/></svg><span id="res-wood">10</span></div>
+      <div class="badge"><svg class="svg-icon" style="color:#3498db"><use href="#ic-water"/></svg><span id="res-water">10</span></div>
+      <div class="badge"><svg class="svg-icon" style="color:#e67e22"><use href="#ic-food"/></svg><span id="res-food">5</span></div>
+      <div class="badge"><svg class="svg-icon" style="color:#1abc9c"><use href="#ic-shell"/></svg><span id="res-shells">0</span></div>
+      <div class="badge" id="pet-badge" style="display:none; background:#8e44ad;">
+        <svg class="svg-icon"><use href="#ic-octopus"/></svg> Друг: Осьминог
+      </div>
+    </div>
+    <div class="res-group">
+      <button class="action-btn" onclick="openModal('invite-modal')"><svg class="svg-icon"><use href="#ic-users"/></svg>Пригласить</button>
+      <button class="action-btn" onclick="openModal('settings-modal')"><svg class="svg-icon"><use href="#ic-settings"/></svg>Ник</button>
+      <button class="action-btn" id="event-btn" style="display:none; background:#e67e22;" onclick="openModal('event-modal')"><svg class="svg-icon"><use href="#ic-shell"/></svg>Ивент-мир</button>
+      <button class="action-btn" id="admin-btn" style="display:none; background:#c0392b;" onclick="openModal('admin-modal')"><svg class="svg-icon"><use href="#ic-crown"/></svg>Админка</button>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <button class="tool-btn active" data-tool="move"><svg class="svg-icon"><use href="#ic-walk"/></svg>Идти</button>
+    <button class="tool-btn" data-tool="plow"><svg class="svg-icon"><use href="#ic-plow"/></svg>Вспахать</button>
+    <button class="tool-btn" data-tool="plant"><svg class="svg-icon"><use href="#ic-plant"/></svg>Посадить</button>
+    <button class="tool-btn" data-tool="water"><svg class="svg-icon"><use href="#ic-water"/></svg>Полить</button>
+    <button class="tool-btn" data-tool="chop"><svg class="svg-icon"><use href="#ic-axe"/></svg>Дрова</button>
+    <button class="tool-btn" data-tool="build"><svg class="svg-icon"><use href="#ic-build"/></svg>Строить</button>
+    <button class="tool-btn" data-tool="fish"><svg class="svg-icon"><use href="#ic-fish"/></svg>Рыбалка</button>
   </div>
 </div>
 
-<div id="inv-win" class="win hidden">
-  <div style="display:flex; justify-content:space-between; align-items:center;"><h3>Рюкзак и Текущая Удочка</h3><button onclick="openWin('inv-win')" style="background:none; border:none; cursor:pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-  <p id="rod-txt" style="font-size:12px; color:#2ecc71; margin:8px 0;"></p>
-  <div id="inv-list"></div>
+<div class="modal" id="invite-modal">
+  <h3><svg class="svg-icon"><use href="#ic-users"/></svg>Пригласить в свой мир</h3>
+  <p style="font-size:13px; margin-bottom:8px;">Ваш ник: <b id="my-nick-display"></b></p>
+  <input type="text" id="invite-nick-input" placeholder="Ник друга...">
+  <button style="background:#27ae60; color:white;" onclick="sendInvite()">Позвать</button>
+  <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Закрыть</button>
 </div>
 
-<div id="shop-win" class="win hidden">
-  <div style="display:flex; justify-content:space-between; align-items:center;"><h3 style="color:#f1c40f;">Лесной Магазин Снастей</h3><button onclick="openWin('shop-win')" style="background:none; border:none; cursor:pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-  <p id="shop-bal" style="margin:8px 0; color:#f1c40f; font-weight:bold;"></p>
-  <button class="btn" style="margin-bottom:12px; width:100%;" onclick="sellAllFish()">Продать всю рыбу из рюкзака</button>
-  <h4 style="margin-bottom:6px;">Купить улучшения компонентов удочки:</h4>
-  <div id="shop-items"></div>
+<div class="modal" id="settings-modal">
+  <h3><svg class="svg-icon"><use href="#ic-settings"/></svg>Сменить игровой ник</h3>
+  <input type="text" id="new-nick-input" placeholder="Новый ник...">
+  <button style="background:#2980b9; color:white;" onclick="changeNick()">Сохранить</button>
+  <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Отмена</button>
 </div>
 
-<div id="end-win" class="win hidden">
-  <div style="display:flex; justify-content:space-between; align-items:center;"><h3>Эндер-Сундук</h3><button onclick="openWin('end-win')" style="background:none; border:none; cursor:pointer;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ff4757" stroke-width="2.5"><path d="M18 6L6 18M6 6l12 12"/></svg></button></div>
-  <div id="end-list"></div>
+<div class="modal" id="event-modal">
+  <h3><svg class="svg-icon"><use href="#ic-shell"/></svg>Ивент-мир: Тайны Рифа</h3>
+  <p style="font-size:13px; margin-bottom:10px;">Выполняйте миссии и меняйте ракушки на награды!</p>
+  <button style="background:#16a085; color:white; width:100%; margin-bottom:8px;" onclick="doEventMission()">Миссия: Собрать водоросли (+5 ракушек)</button>
+  <button style="background:#d35400; color:white; width:100%; margin-bottom:8px;" onclick="buyEventReward('deco')">Купить: Золотой фонтан (10 ракушек)</button>
+  <button style="background:#8e44ad; color:white; width:100%; margin-bottom:8px;" onclick="buyEventReward('skin')">Персонаж: Королевский Гусь (15 ракушек)</button>
+  <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Закрыть</button>
 </div>
 
-<div id="game-toast" class="hidden"></div>
-<div id="custom-confirm" class="hidden">
-  <p id="confirm-text" style="margin-bottom:15px; font-size:14px;"></p>
-  <div style="display:flex; justify-content:center; gap:10px;">
-    <button class="btn" id="confirm-yes" style="margin:0; padding:8px 18px;">Да</button>
-    <button class="btn" id="confirm-no" style="margin:0; padding:8px 18px; background:#e74c3c; border-color:#c0392b; color:#fff;">Нет</button>
+<div class="modal" id="admin-modal">
+  <h3><svg class="svg-icon"><use href="#ic-crown"/></svg>Панель Администратора</h3>
+  <input type="text" id="admin-target-nick" placeholder="Ник игрока (пусто = себе)">
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; margin-bottom:10px;">
+    <button style="background:#27ae60; color:white;" onclick="adminCmd('giveResources', {resource:'wood', amount:50})">+50 Дров</button>
+    <button style="background:#2980b9; color:white;" onclick="adminCmd('giveResources', {resource:'water', amount:50})">+50 Воды</button>
+    <button style="background:#e67e22; color:white;" onclick="adminCmd('giveResources', {resource:'food', amount:50})">+50 Еды</button>
+    <button style="background:#f1c40f; color:black;" onclick="adminCmd('giveEnergy', {amount:100})">+100 Энергии</button>
+    <button style="background:#8e44ad; color:white;" onclick="adminCmd('unlockLocation', {zone:'north'})">Открыть локацию</button>
+    <button style="background:#c0392b; color:white;" onclick="adminCmd('toggleEvent', {})">Вкл/Выкл Ивент</button>
   </div>
+  <a href="/widget.html" target="_blank" style="color:#f1c40f; display:block; margin-bottom:10px; font-size:13px;">Открыть внешний виджет (widget.html)</a>
+  <button style="background:#7f8c8d; color:white;" onclick="closeModals()">Закрыть</button>
 </div>
 
-<canvas id="c"></canvas>
 <script>
-const socket = io();
+  const socket = io();
+  let fsDismissed = false;
+  let myNick = '';
+  let isAdmin = false;
+  let currentTool = 'move';
+  let gooseColor = '#ffffff';
 
-let toastTimer = null;
-function notify(msg, color = "#2ecc71") {
-  const el = document.getElementById('game-toast');
-  el.innerText = msg; el.style.borderColor = color; el.classList.remove('hidden');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.add('hidden'), 3500);
-}
+  const stats = { energy: 100, wood: 10, water: 10, food: 5, shells: 0, hasOctopus: false };
+  let worldData = { tiles: {}, unlockedZones: ['main'], eventActive: false };
+  let players = {};
+  let myPos = { x: 10, y: 10 };
 
-function askConfirm(msg, onYes) {
-  const box = document.getElementById('custom-confirm');
-  document.getElementById('confirm-text').innerText = msg;
-  box.classList.remove('hidden');
-  document.getElementById('confirm-yes').onclick = () => { box.classList.add('hidden'); onYes(); };
-  document.getElementById('confirm-no').onclick = () => { box.classList.add('hidden'); };
-}
+  const fsOverlay = document.getElementById('fs-overlay');
+  const fsEnterBtn = document.getElementById('fs-enter-btn');
+  const fsClose = document.getElementById('fs-close');
+  const mainMenu = document.getElementById('main-menu');
 
-let fsClosed = false;
-function openFs() {
-  const el = document.documentElement;
-  if (el.requestFullscreen) el.requestFullscreen();
-  if (screen.orientation?.lock) screen.orientation.lock('landscape').catch(()=>{});
-  document.getElementById('fs-overlay').classList.add('hidden');
-}
-function closeFs() { fsClosed = true; document.getElementById('fs-overlay').classList.add('hidden'); }
-document.addEventListener('fullscreenchange', () => {
-  if (!document.fullscreenElement && !fsClosed) document.getElementById('fs-overlay').classList.remove('hidden');
-});
+  fsEnterBtn.onclick = () => {
+    const el = document.documentElement;
+    if (el.requestFullscreen) el.requestFullscreen();
+    else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    fsOverlay.style.display = 'none';
+    if (!myNick) mainMenu.style.display = 'flex';
+  };
 
-let prof = { nick: "Рыбак", isOwner: false, xp: 0, coins: 100, level: 1, rod: { base:1, line:1, reel:1, lure:1, bobber:1 }, inventory: [], enderChest: [] };
-let ownerToken = "", px = 380, loc = 'water', others = {}, inRoom = false;
+  fsClose.onclick = () => {
+    fsDismissed = true;
+    fsOverlay.style.display = 'none';
+    if (!myNick) mainMenu.style.display = 'flex';
+  };
 
-document.getElementById('nick-inp').addEventListener('input', e => {
-  document.getElementById('pass-inp').classList.toggle('hidden', e.target.value.trim() !== "HELM77ZX");
-});
-
-function renderServersList(list) {
-  const box = document.getElementById('srv-list');
-  box.innerHTML = '';
-  const servers = (list && list.length > 0) ? list : [{ name: "play.ribalka.hu", count: 0, max: "∞" }];
-  if (!servers.some(s => s.name === "play.ribalka.hu")) servers.unshift({ name: "play.ribalka.hu", count: 0, max: "∞" });
-  servers.forEach(r => {
-    const b = document.createElement('button');
-    b.className = 'btn'; b.style.display = 'flex'; b.style.margin = '6px auto'; b.style.width = '290px';
-    if (r.name === "play.ribalka.hu") b.style.borderColor = "gold";
-    b.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg><span>${r.name} (${r.count}/${r.max})</span>`;
-    b.onclick = () => enterRoom(r.name);
-    box.appendChild(b);
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && !fsDismissed) fsOverlay.style.display = 'flex';
   });
-}
 
-async function doLogin() {
-  const nick = document.getElementById('nick-inp').value.trim();
-  if (!nick) return;
-  if (nick === "HELM77ZX") {
-    const res = await fetch('/api/verify-admin', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ username: nick, password: document.getElementById('pass-inp').value })
-    });
-    const data = await res.json();
-    if (!data.success) return document.getElementById('err-txt').innerText = "Неверный пароль!";
-    ownerToken = data.token; prof.isOwner = true;
-    if (!document.getElementById('owner-widget')) {
-      const w = await (await fetch('/widget.html?token=' + ownerToken)).text();
-      document.body.insertAdjacentHTML('beforeend', w);
+  const nickInput = document.getElementById('nick-input');
+  const adminPassInput = document.getElementById('admin-pass-input');
+
+  nickInput.addEventListener('input', () => {
+    adminPassInput.style.display = (nickInput.value.trim() === 'HELM77ZX') ? 'block' : 'none';
+  });
+
+  async function startGame(mode) {
+    const nick = nickInput.value.trim();
+    if (!nick) return showToast('Введите ваш ник!');
+
+    if (nick === 'HELM77ZX') {
+      const password = adminPassInput.value;
+      const res = await fetch('/api/auth-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nick, password })
+      });
+      const data = await res.json();
+      if (!data.success) return showToast('Неверный пароль для HELM77ZX!');
+      isAdmin = true;
     }
+
+    myNick = nick;
+    socket.emit('register', { nick: myNick, isAdmin });
+    mainMenu.style.display = 'none';
+    document.getElementById('game-ui').style.display = 'block';
+    document.getElementById('my-nick-display').innerText = myNick;
+
+    if (isAdmin) {
+      document.getElementById('admin-btn').style.display = 'inline-flex';
+      document.getElementById('event-btn').style.display = 'inline-flex';
+    }
+
+    socket.emit('joinWorld', myNick);
+    resizeCanvas();
+    requestAnimationFrame(renderLoop);
   }
-  prof.nick = nick;
-  document.getElementById('login-modal').classList.add('hidden');
-  document.getElementById('srv-modal').classList.remove('hidden');
-  renderServersList([]);
-  socket.emit('getRooms');
-}
-
-window.ownerAddXp = (v) => { prof.xp += v; prof.coins += v; save(); notify(`Начислено +${v} XP и Монет`, "gold"); };
-window.ownerSendMsg = () => socket.emit('adminCmd', { token: ownerToken, type: 'msg', val: document.getElementById('owner-msg-inp').value });
-socket.on('globalMsg', m => notify(`[OWNER]: ${m}`, "gold"));
-socket.on('roomsList', list => renderServersList(list));
-
-let adStep = 0;
-function startAds() { const n = document.getElementById('new-srv-inp').value.trim(); if (!n) return notify("Введите название сервера!", "#ff4757"); adStep = 0; runAd(n); }
-function runAd(name) {
-  const m = document.getElementById('ad-modal'), v = document.getElementById('ad-vid');
-  document.getElementById('ad-lbl').innerText = `Реклама ${adStep + 1} из 2`; m.classList.remove('hidden'); v.currentTime = 0;
-  v.play().catch(() => setTimeout(() => finishAdStep(m, name), 3000));
-  v.onended = () => finishAdStep(m, name);
-}
-function finishAdStep(m, name) { if (++adStep < 2) runAd(name); else { m.classList.add('hidden'); socket.emit('createRoom', name); enterRoom(name); } }
-
-function enterRoom(roomName) { socket.emit('joinRoom', { roomName, nick: prof.nick, isOwner: prof.isOwner }); }
-socket.on('joinError', err => notify(err, "#ff4757"));
-socket.on('joinedRoomSuccess', (roomName) => {
-  inRoom = true; others = {};
-  document.getElementById('srv-modal').classList.add('hidden');
-  document.getElementById('hud').classList.remove('hidden');
-  document.getElementById('top-left-bar').classList.remove('hidden');
-  document.getElementById('mobile-controls').classList.remove('hidden');
-  notify(`Вы вошли на сервер: ${roomName}`);
-});
-
-function leaveServer() {
-  inRoom = false; state = 'idle'; socket.emit('leaveRoom');
-  ['hud', 'top-left-bar', 'mobile-controls', 'inv-win', 'end-win', 'shop-win'].forEach(id => document.getElementById(id).classList.add('hidden'));
-  document.getElementById('srv-modal').classList.remove('hidden'); socket.emit('getRooms');
-}
-
-socket.on('initProfile', p => { prof = p; if (typeof prof.coins === 'undefined') prof.coins = 100; updHud(); });
-socket.on('currentPlayers', ps => { others = ps; delete others[socket.id]; });
-socket.on('newPlayer', p => others[p.id] = p);
-socket.on('playerMoved', p => others[p.id] = p);
-socket.on('playerDisconnected', id => delete others[id]);
-socket.on('incomingTrade', ({ fromId, fromNick }) => {
-  if (prof.level >= 20) askConfirm(`Трейд от ${fromNick}! Отдать последнюю рыбу из рюкзака?`, () => {
-    const item = prof.inventory.pop();
-    if (item) { save(); socket.emit('tradeAccept', { targetId: fromId, item }); } else notify("Рюкзак пуст!", "#ff4757");
+  socket.on('worldState', (world) => {
+    worldData = world;
+    if (world.eventActive) document.getElementById('event-btn').style.display = 'inline-flex';
   });
-});
-socket.on('tradeCompleted', ({ item }) => { prof.inventory.push(item); save(); notify(`Получено по трейду: ${item.name}`); });
+  socket.on('playersList', (list) => { players = {}; list.forEach(p => { players[p.id] = p; }); });
+  socket.on('playerMoved', (p) => { players[p.id] = p; });
+  socket.on('playerUpdated', (p) => { players[p.id] = p; });
+  socket.on('playerLeft', (id) => { delete players[id]; });
+  socket.on('tileUpdated', ({ key, tile }) => { worldData.tiles[key] = tile; });
 
-function save() { prof.level = Math.floor(prof.xp / 500) + 1; socket.emit('syncProfile', prof); updHud(); }
-function updHud() {
-  const n = prof.isOwner ? `<span style="color:gold;">[OWNER] ${prof.nick}</span>` : prof.nick;
-  document.getElementById('hud-info').innerHTML = `${n} | LVL: <b>${prof.level}</b> | Монеты: <b style="color:#f1c40f;">${prof.coins}</b> | ${loc === 'water' ? 'Вода' : 'Лава'}`;
-}
-function toggleLoc() {
-  if (prof.level < 100 && !prof.isOwner) return notify("Лава доступна с 100+ уровня!", "#ff4757");
-  loc = loc === 'water' ? 'lava' : 'water'; state = 'idle'; updHud();
-  socket.emit('playerMove', { x: px, location: loc, level: prof.level });
-}
-
-const SHOP_CATALOG = [
-  { key: 'base', name: 'Основание удилища', desc: 'Увеличивает дистанцию броска' },
-  { key: 'line', name: 'Плетёная леска (+15 кг)', desc: 'Позволяет вытянуть гигантских рыб' },
-  { key: 'reel', name: 'Скоростной моток', desc: 'Быстрее тянет рыбу и крючок' },
-  { key: 'lure', name: 'Редкая приманка', desc: 'Ускоряет поклёвку и шанс 1 к X' },
-  { key: 'bobber', name: 'Сенсорный поплавок', desc: 'Увеличивает радиус захвата крючком' }
-];
-function openShop() { document.getElementById('shop-win').classList.remove('hidden'); renderShop(); }
-function renderShop() {
-  document.getElementById('shop-bal').innerText = `Баланс: ${prof.coins} монет | Опыт: ${prof.xp} XP | Рыб: ${prof.inventory.length}`;
-  const box = document.getElementById('shop-items'); box.innerHTML = '';
-  SHOP_CATALOG.forEach(item => {
-    const curLvl = prof.rod[item.key], price = curLvl * 60;
-    box.innerHTML += `<div class="card" style="border-left-color:#f1c40f;"><div><b>${item.name} [Ур. ${curLvl}]</b><br><small style="color:#aaa;">${item.desc}</small></div><button class="s-btn" style="background:#f39c12;" onclick="buyPart('${item.key}', ${price})">Купить (${price})</button></div>`;
+  socket.on('receiveInvite', ({ fromNick, worldId }) => {
+    if (confirm(`Игрок ${fromNick} приглашает вас в свой мир! Перейти?`)) {
+      socket.emit('joinWorld', worldId);
+      showToast(`Вы перешли в мир игрока ${fromNick}`);
+    }
   });
-}
-function buyPart(key, price) {
-  if (prof.coins < price) return notify(`Нужно ${price} монет! Продайте рыбу!`, "#ff4757");
-  prof.coins -= price; prof.rod[key]++; save(); renderShop(); notify("Улучшение куплено!", "#2ecc71");
-}
-function sellAllFish() {
-  if (prof.inventory.length === 0) return notify("В рюкзаке нет рыбы!", "#ffa502");
-  let earned = 0; prof.inventory.forEach(f => { earned += Math.max(10, Math.round(f.weight * 8)); });
-  prof.inventory = []; prof.coins += earned; save(); renderShop(); notify(`Продано за ${earned} монет!`, "#f1c40f");
-}
-const c = document.getElementById('c'), ctx = c.getContext('2d');
-function rsz() { c.width = innerWidth; c.height = innerHeight; } window.onresize = rsz; rsz();
 
-let state = 'idle', power = 0, dir = 1, bobberX = 0;
-let waitTimer = 0, biteWindow = 0, isBiting = false;
-let hookX = 0, hookY = 0, tension = 0, hookedFish = null;
-let underwaterFishes = [];
+  socket.on('adminReward', ({ resource, amount }) => {
+    stats[resource] = (stats[resource] || 0) + amount;
+    updateUI();
+    showToast(`Администратор выдал: +${amount} (${resource})`);
+  });
 
-const W_FISH = [
-  {n:"Треска", w:2.2, c:2, col:"#7bed9f", sz:30},
-  {n:"Фугу", w:1.8, c:25, col:"#ffdd59", sz:26},
-  {n:"Зюка", w:6.5, c:150, col:"#70a1ff", sz:38},
-  {n:"Акула", w:42.0, c:2500, col:"#a4b0be", sz:56},
-  {n:"Левиафан", w:300.0, c:100000, col:"#ff4757", sz:80}
-];
-const L_FISH = [
-  {n:"Огненный угорь", w:5.0, c:10, col:"#ffa502", sz:34},
-  {n:"Магма-фугу", w:9.0, c:100, col:"#ff6348", sz:30},
-  {n:"Лавовая зюка", w:24.0, c:1500, col:"#ff4757", sz:44},
-  {n:"Дракон Ядра", w:500.0, c:100000, col:"#eccc68", sz:85}
-];
-const MUTS = [
-  {n:"Обычная", m:1, c:1, glow:null},
-  {n:"Прозрачная", m:1.5, c:10, glow:"rgba(255,255,255,0.45)"},
-  {n:"Фиолетовая", m:2.2, c:50, glow:"#a29bfe"},
-  {n:"4 глаза", m:4.0, c:250, glow:"#00d2d3"}
-];
+  socket.on('eventStatus', (active) => {
+    worldData.eventActive = active;
+    document.getElementById('event-btn').style.display = (active || isAdmin) ? 'inline-flex' : 'none';
+    showToast(active ? 'Ивент-мир открыт!' : 'Ивент-мир закрыт.');
+  });
 
-function spawnUnderwaterFishes(castPower) {
-  underwaterFishes = [];
-  const pool = loc === 'water' ? W_FISH : L_FISH;
-  const luck = 1 + (castPower / 45) + (prof.rod.lure * 0.6);
+  socket.on('notify', (msg) => showToast(msg));
 
-  for (let i = 0; i < 8; i++) {
-    let f = pool; pool.forEach(x => { if (Math.random() * x.c <= luck) f = x; });
-    let mut = MUTS; MUTS.forEach(x => { if (Math.random() * x.c <= luck) mut = x; });
+  document.querySelectorAll('.tool-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentTool = btn.dataset.tool;
+    };
+  });
 
-    const rarity = Math.max(1, Math.round((f.c * mut.c) / luck));
-    const weight = +(f.w * (0.8 + Math.random() * 0.7) * mut.m).toFixed(2);
-    const fromLeft = Math.random() < 0.5;
-
-    underwaterFishes.push({
-      x: fromLeft ? -60 - Math.random() * 300 : c.width + 60 + Math.random() * 300,
-      y: 90 + Math.random() * (c.height - 180),
-      vx: (fromLeft ? 1 : -1) * (1.2 + Math.random() * 1.8),
-      data: { name: f.n, mut: mut.n, weight, chance: `1 к ${rarity.toLocaleString('ru-RU')}`, xp: Math.round(weight * 15 * mut.m) },
-      col: mut.glow || f.col, sz: f.sz,
-      isTransparent: mut.n === "Прозрачная", fourEyes: mut.n === "4 глаза"
-    });
+  function sendInvite() {
+    const target = document.getElementById('invite-nick-input').value.trim();
+    if (target) socket.emit('invitePlayer', target);
+    closeModals();
   }
-}
 
-function action() {
-  if (!inRoom) return;
-  if (state === 'idle') {
-    if (px < 520) return notify("Подойдите к воде или лаве справа!", "#ffa502");
-    state = 'cast'; power = 0;
-  } else if (state === 'cast') {
-    const maxDist = 200 + (prof.rod.base * 45) + (prof.rod.reel * 30);
-    bobberX = px + 80 + (power / 100) * maxDist;
-    state = 'waiting'; isBiting = false;
-    const speedBonus = Math.min(180, prof.rod.lure * 20);
-    waitTimer = Math.max(120, Math.floor(240 + Math.random() * 240 - speedBonus));
-    document.getElementById('b-act').innerText = "ЖДЁМ...";
-    notify("Поплавок в воде! Ждите, пока рыба клюнет...", "#00d2d3");
-  } else if (state === 'waiting') {
-    if (!isBiting) {
-      notify("Слишком рано! Рыба ещё не клюнула.", "#ff6b6b");
-      state = 'idle';
+  function changeNick() {
+    const n = document.getElementById('new-nick-input').value.trim();
+    if (n && n !== 'HELM77ZX') {
+      myNick = n;
+      document.getElementById('my-nick-display').innerText = myNick;
+      socket.emit('changeNick', myNick);
+      showToast('Ник изменён!');
+    }
+    closeModals();
+  }
+
+  function adminCmd(type, payload) {
+    const targetNick = document.getElementById('admin-target-nick').value.trim();
+    socket.emit('adminAction', { type, targetNick, payload });
+  }
+
+  function doEventMission() {
+    if (stats.energy < 5) return showToast('Мало энергии!');
+    stats.energy -= 5;
+    stats.shells += 5;
+    updateUI();
+    showToast('Миссия выполнена! Получено +5 ракушек.');
+  }
+
+  function buyEventReward(type) {
+    if (type === 'deco' && stats.shells >= 10) {
+      stats.shells -= 10;
+      socket.emit('tileAction', { x: myPos.x, y: myPos.y, action: 'build', item: 'fountain' });
+      showToast('Золотой фонтан установлен!');
+    } else if (type === 'skin' && stats.shells >= 15) {
+      stats.shells -= 15;
+      gooseColor = '#f1c40f';
+      showToast('Открыт образ: Королевский Гусь!');
     } else {
-      state = 'underwater'; hookX = c.width / 2; hookY = c.height / 2;
-      tension = 0; hookedFish = null; spawnUnderwaterFishes(power);
-      document.getElementById('b-act').innerText = "ЗАЦЕПИТЬ";
-      notify("Есть поклёвка! Наведите крючок на рыбу и зацепите её!", "gold");
+      showToast('Недостаточно ракушек!');
     }
-  } else if (state === 'underwater') {
-    if (!hookedFish) {
-      const grabRadius = 35 + prof.rod.bobber * 5;
-      for (let f of underwaterFishes) {
-        if (Math.hypot(f.x - hookX, f.y - hookY) <= grabRadius + f.sz * 0.5) {
-          hookedFish = f; document.getElementById('b-act').innerText = "ТЯНУТЬ";
-          notify(`На крючке: [${f.data.mut}] ${f.data.name} (${f.data.weight} кг)! Тяните наверх!`, "gold");
-          break;
-        }
-      }
-      if (!hookedFish) notify("Мимо! Подведите крючок ближе к рыбе.", "#ff6b6b");
-    } else {
-      hookY -= 22 + prof.rod.reel * 4;
-      const maxWeight = prof.rod.line * 15;
-      tension += hookedFish.data.weight > maxWeight ? (hookedFish.data.weight / maxWeight) * 18 : 6;
-    }
+    updateUI();
   }
-}
 
-const keys = {};
-window.onkeydown = e => { keys[e.code] = true; if (e.code === 'Space') action(); };
-window.onkeyup = e => { keys[e.code] = false; };
-const touch = (id, k) => {
-  const el = document.getElementById(id);
-  el.ontouchstart = e => { e.preventDefault(); keys[k] = true; };
-  el.ontouchend = e => { e.preventDefault(); keys[k] = false; };
-};
-touch('b-left', 'ArrowLeft'); touch('b-right', 'ArrowRight'); touch('b-up', 'ArrowUp'); touch('b-down', 'ArrowDown');
+  function openModal(id) { document.getElementById(id).style.display = 'block'; }
+  function closeModals() { document.querySelectorAll('.modal').forEach(m => m.style.display = 'none'); }
 
-document.getElementById('b-act').ontouchstart = e => { e.preventDefault(); action(); };
-document.getElementById('b-act').onclick = () => action();
-
-document.getElementById('b-use').onclick = () => {
-  if (state !== 'idle') return;
-  if (Math.abs(px - 110) < 55) { renderEnd(); openWin('end-win'); }
-  else if (Math.abs(px - 240) < 65) { openShop(); }
-  else if (prof.level >= 20) {
-    for (let id in others) if (Math.abs(others[id].x - px) < 55) {
-      socket.emit('tradeRequest', { targetId: id, fromNick: prof.nick });
-      notify(`Запрос на трейд отправлен игроку ${others[id].nick}`);
-      break;
-    }
-  } else {
-    notify("Подойдите к Магазину в лесу или Эндер-сундуку слева.", "#aaa");
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.innerText = msg;
+    t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
   }
-};
-let camX = 0, animTick = 0;
-const vis = (wx, w) => (wx + w >= camX) && (wx <= camX + c.width);
 
-function drawTree(x, groundY, isLava) {
-  if (!vis(x - 40, 80)) return;
-  const sx = x - camX;
-  ctx.fillStyle = isLava ? '#3d3d3d' : '#5D4037'; ctx.fillRect(sx - 8, groundY - 95, 16, 95);
-  ctx.fillStyle = isLava ? '#222' : '#3E2723'; ctx.fillRect(sx - 2, groundY - 95, 4, 95);
-  ctx.fillStyle = isLava ? '#6D214F' : '#1B5E20'; ctx.fillRect(sx - 36, groundY - 125, 72, 35);
-  ctx.fillStyle = isLava ? '#B33771' : '#2E7D32'; ctx.fillRect(sx - 28, groundY - 150, 56, 30);
-  ctx.fillStyle = isLava ? '#FD7272' : '#4CAF50'; ctx.fillRect(sx - 18, groundY - 168, 36, 22);
-}
+  function updateUI() {
+    document.getElementById('res-energy').innerText = stats.energy;
+    document.getElementById('res-wood').innerText = stats.wood;
+    document.getElementById('res-water').innerText = stats.water;
+    document.getElementById('res-food').innerText = stats.food;
+    document.getElementById('res-shells').innerText = stats.shells;
+    if (stats.hasOctopus) document.getElementById('pet-badge').style.display = 'inline-flex';
+  }
 
-function drawForestShop(x, groundY) {
-  if (!vis(x - 60, 120)) return;
-  const sx = x - camX;
-  ctx.fillStyle = '#795548'; ctx.fillRect(sx - 45, groundY - 65, 90, 65);
-  ctx.fillStyle = '#4E342E';
-  for (let y = groundY - 60; y < groundY; y += 10) ctx.fillRect(sx - 45, y, 90, 2);
-  ctx.fillStyle = '#c0392b';
-  ctx.beginPath(); ctx.moveTo(sx - 55, groundY - 65); ctx.lineTo(sx, groundY - 105); ctx.lineTo(sx + 55, groundY - 65); ctx.closePath(); ctx.fill();
-  ctx.fillStyle = '#f1c40f'; ctx.fillRect(sx - 30, groundY - 45, 26, 22);
-  ctx.fillStyle = '#3E2723'; ctx.fillRect(sx + 8, groundY - 48, 22, 48);
-  ctx.fillStyle = '#222'; ctx.fillRect(sx - 36, groundY - 82, 72, 16);
-  ctx.strokeStyle = 'gold'; ctx.strokeRect(sx - 36, groundY - 82, 72, 16);
-  ctx.fillStyle = 'gold'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-  ctx.fillText("МАГАЗИН", sx, groundY - 70); ctx.textAlign = 'left';
-}
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const TILE_W = 64, TILE_H = 32;
 
-function loop() {
-  if (!inRoom) { requestAnimationFrame(loop); return; }
-  animTick++;
+  function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+  window.addEventListener('resize', resizeCanvas);
 
-  if (state === 'idle' || state === 'cast' || state === 'waiting') {
-    if (state === 'idle') document.getElementById('b-act').innerText = "ЗАБРОС";
-    else if (state === 'cast') document.getElementById('b-act').innerText = "КИНУТЬ";
-    else if (state === 'waiting') document.getElementById('b-act').innerText = isBiting ? "ПОДСЕЧЬ!" : "ЖДЁМ...";
+  function isoToScreen(gx, gy) {
+    return {
+      x: (canvas.width / 2) + (gx - gy) * (TILE_W / 2),
+      y: 120 + (gx + gy) * (TILE_H / 2)
+    };
+  }
 
-    if (state === 'idle') {
-      let mv = false;
-      if (keys['ArrowLeft'] || keys['KeyA']) { px = Math.max(70, px - 4); mv = true; }
-      if (keys['ArrowRight'] || keys['KeyD']) { px = Math.min(620, px + 4); mv = true; }
-      if (mv) socket.emit('playerMove', { x: px, location: loc, level: prof.level });
+  function screenToIso(sx, sy) {
+    const adjX = sx - (canvas.width / 2);
+    const adjY = sy - 120;
+    return {
+      x: Math.floor((adjY / (TILE_H / 2) + adjX / (TILE_W / 2)) / 2),
+      y: Math.floor((adjY / (TILE_H / 2) - adjX / (TILE_W / 2)) / 2)
+    };
+  }
+
+  canvas.addEventListener('click', (e) => {
+    const { x, y } = screenToIso(e.clientX, e.clientY);
+    const tile = worldData.tiles[`${x},${y}`];
+    if (!tile) return;
+
+    if (currentTool === 'move' && tile.type !== 'water') {
+      myPos = { x, y };
+      socket.emit('move', { x, y, hasOctopus: stats.hasOctopus });
+      return;
     }
-    if (state === 'cast') { power += 2.5 * dir; if (power >= 100 || power <= 0) dir *= -1; }
-    if (state === 'waiting') {
-      if (!isBiting) {
-        if (--waitTimer <= 0) { isBiting = true; biteWindow = 110; notify("КЛЮЁТ! Жмите ПОДСЕЧЬ!", "gold"); }
+
+    if (stats.energy <= 0) return showToast('Нет энергии!');
+
+    if (currentTool === 'fish' && tile.type === 'water') {
+      stats.energy -= 2;
+      if (!stats.hasOctopus && Math.random() < 0.45) {
+        stats.hasOctopus = true;
+        showToast('Ура! Вы выловили Осьминога! Теперь это ваш друг!');
+        socket.emit('move', { x: myPos.x, y: myPos.y, hasOctopus: true });
       } else {
-        if (--biteWindow <= 0) { isBiting = false; state = 'idle'; notify("Рыба сорвалась! Вы не успели подсечь.", "#ff4757"); }
+        stats.food += 2;
+        showToast('Вы поймали рыбу (+2 Еды)');
       }
+    } else if (currentTool === 'plow' && tile.type === 'grass') {
+      stats.energy -= 1;
+      socket.emit('tileAction', { x, y, action: 'plow' });
+    } else if (currentTool === 'plant' && tile.type === 'soil') {
+      if (tile.stage >= 3) {
+        stats.food += 4; stats.energy += 5;
+        socket.emit('tileAction', { x, y, action: 'harvest' });
+        showToast('Урожай собран! (+4 Еды, +5 Энергии)');
+      } else {
+        socket.emit('tileAction', { x, y, action: 'plant', item: 'carrot' });
+      }
+    } else if (currentTool === 'water' && tile.crop && stats.water > 0) {
+      stats.water -= 1;
+      socket.emit('tileAction', { x, y, action: 'water' });
+    } else if (currentTool === 'chop' && tile.type === 'tree') {
+      stats.energy -= 2; stats.wood += 5;
+      socket.emit('tileAction', { x, y, action: 'chop' });
+      showToast('Дерево срублено (+5 Дров)');
+    } else if (currentTool === 'build' && tile.type === 'grass' && stats.wood >= 3) {
+      stats.wood -= 3;
+      socket.emit('tileAction', { x, y, action: 'build', item: 'fence' });
     }
+    updateUI();
+  });
 
-    camX = Math.max(0, px - c.width / 3);
-    const isLava = loc === 'lava';
-    const skyGrad = ctx.createLinearGradient(0, 0, 0, c.height);
-    skyGrad.addColorStop(0, isLava ? '#1e0507' : '#1e90ff');
-    skyGrad.addColorStop(1, isLava ? '#57181e' : '#70a1ff');
-    ctx.fillStyle = skyGrad; ctx.fillRect(0, 0, c.width, c.height);
+  function drawIsoTile(gx, gy, tile) {
+    const { x, y } = isoToScreen(gx, gy);
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x + TILE_W / 2, y + TILE_H / 2);
+    ctx.lineTo(x, y + TILE_H);
+    ctx.lineTo(x - TILE_W / 2, y + TILE_H / 2);
+    ctx.closePath();
 
-    const gY = c.height - 120;
-    ctx.fillStyle = isLava ? 'rgba(255,100,50,0.12)' : 'rgba(255,255,255,0.65)';
-    for (let i = 0; i < 6; i++) {
-      const cx = ((i * 380 + animTick * 0.2) % 2400) - camX * 0.4;
-      ctx.fillRect(cx, 55 + (i % 3) * 25, 90, 22); ctx.fillRect(cx + 18, 43 + (i % 3) * 25, 54, 14);
-    }
+    ctx.fillStyle = tile.type === 'water' ? '#2980b9' : (tile.type === 'soil' ? '#6e2c00' : '#2ecc71');
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    ctx.stroke();
 
-    [60, 175, 330, 445, 565].forEach(tx => drawTree(tx, gY, isLava));
-    drawForestShop(240, gY);
-
-    if (vis(0, 650)) {
-      ctx.fillStyle = isLava ? '#2f3542' : '#5D4037'; ctx.fillRect(-camX, gY, 650, 120);
-      ctx.fillStyle = isLava ? '#747d8c' : '#2ecc71'; ctx.fillRect(-camX, gY, 650, 14);
-      ctx.fillStyle = isLava ? '#1e272e' : '#3E2723';
-      for (let gx = 10; gx < 640; gx += 45) if (vis(gx, 20)) { ctx.fillRect(gx - camX, gY + 28, 14, 10); ctx.fillRect(gx + 18 - camX, gY + 55, 18, 12); }
-      ctx.fillStyle = isLava ? '#57606f' : '#d1ccc0'; ctx.fillRect(100 - camX, gY, 530, 8);
-    }
-
-    if (vis(90, 44)) {
-      const ex = 110 - camX;
-      ctx.fillStyle = '#191933'; ctx.fillRect(ex - 20, gY - 36, 40, 36);
-      ctx.strokeStyle = '#8c7ae6'; ctx.lineWidth = 2; ctx.strokeRect(ex - 20, gY - 36, 40, 36);
-      ctx.fillStyle = '#00d8d6'; ctx.fillRect(ex - 4, gY - 22, 8, 8);
-      ctx.fillStyle = '#fff'; ctx.font = 'bold 10px monospace'; ctx.textAlign = 'center'; ctx.fillText("СУНДУК", ex, gY - 42); ctx.textAlign = 'left';
-    }
-
-    if (vis(650, 1850)) {
-      const wave = Math.sin(animTick * 0.08) * 3;
-      ctx.fillStyle = isLava ? '#c23616' : '#0984e3'; ctx.fillRect(650 - camX, gY + 14 + wave, 1850, 110);
-      ctx.fillStyle = isLava ? '#fbc531' : '#74b9ff'; ctx.fillRect(650 - camX, gY + 14 + wave, 1850, 6);
-    }
-
-    for (let id in others) { const o = others[id]; if (o.location === loc && vis(o.x, 30)) drawChar(o.x - camX, gY - 44, o.nick, o.isOwner, o.level); }
-    drawChar(px - camX, gY - 44, prof.nick, prof.isOwner, prof.level);
-
-    if (state === 'waiting' && vis(bobberX - 20, 40)) {
-      const bobberDip = isBiting ? 12 : Math.sin(animTick * 0.1) * 2, by = gY + 14 + bobberDip;
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px + 34 - camX, gY - 38); ctx.lineTo(bobberX - camX, by); ctx.stroke();
-      ctx.fillStyle = '#ff4757'; ctx.fillRect(bobberX - 5 - camX, by - 6, 10, 6);
-      ctx.fillStyle = '#fff'; ctx.fillRect(bobberX - 5 - camX, by, 10, 6);
-      if (isBiting) { ctx.strokeStyle = 'gold'; ctx.beginPath(); ctx.arc(bobberX - camX, gY + 16, 12 + (animTick % 15), 0, Math.PI * 2); ctx.stroke(); }
-    }
-
-    if (state === 'cast') {
-      ctx.fillStyle = '#222'; ctx.fillRect(px - camX - 30, gY - 95, 100, 16);
-      ctx.fillStyle = '#2ecc71'; ctx.fillRect(px - camX - 30, gY - 95, power, 16);
-      ctx.strokeStyle = '#fff'; ctx.strokeRect(px - camX - 30, gY - 95, 100, 16);
+    if (tile.type === 'tree') {
+      ctx.fillStyle = '#7e5109'; ctx.fillRect(x - 4, y - 12, 8, 18);
+      ctx.fillStyle = '#196f3d'; ctx.beginPath(); ctx.arc(x, y - 16, 14, 0, Math.PI * 2); ctx.fill();
+    } else if (tile.type === 'fence') {
+      ctx.fillStyle = '#d35400'; ctx.fillRect(x - 10, y - 6, 20, 12);
+    } else if (tile.type === 'fountain') {
+      ctx.fillStyle = '#f1c40f'; ctx.beginPath(); ctx.arc(x, y + 4, 12, 0, Math.PI * 2); ctx.fill();
+    } else if (tile.crop) {
+      ctx.fillStyle = tile.stage >= 3 ? '#e67e22' : '#a9dfbf';
+      ctx.beginPath(); ctx.arc(x, y + 8, 4 + tile.stage * 2, 0, Math.PI * 2); ctx.fill();
     }
   }
-  if (state === 'underwater') {
-    const spd = 3.5 + prof.rod.reel * 0.4;
-    if (keys['ArrowLeft'] || keys['KeyA']) hookX = Math.max(30, hookX - spd);
-    if (keys['ArrowRight'] || keys['KeyD']) hookX = Math.min(c.width - 30, hookX + spd);
-    if (keys['ArrowUp'] || keys['KeyW']) hookY = Math.max(30, hookY - spd);
-    if (keys['ArrowDown'] || keys['KeyS']) hookY = Math.min(c.height - 30, hookY + spd);
 
-    const depthGrad = ctx.createLinearGradient(0, 0, 0, c.height);
-    depthGrad.addColorStop(0, loc === 'water' ? '#0984e3' : '#d63031');
-    depthGrad.addColorStop(1, loc === 'water' ? '#041e42' : '#2d0808');
-    ctx.fillStyle = depthGrad; ctx.fillRect(0, 0, c.width, c.height);
-
-    ctx.fillStyle = loc === 'water' ? '#00b894' : '#e17055';
-    for (let wx = 40; wx < c.width; wx += 95) {
-      const sway = Math.sin(animTick * 0.05 + wx) * 8;
-      ctx.fillRect(wx + sway, c.height - 65, 10, 65); ctx.fillRect(wx + 14 - sway, c.height - 45, 8, 45);
+  function drawGooseAndOctopus(gx, gy, nick, color, hasOcto) {
+    const { x, y } = isoToScreen(gx, gy);
+    if (hasOcto) {
+      ctx.fillStyle = '#9b59b6'; ctx.beginPath(); ctx.arc(x - 16, y + 6, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.fillRect(x - 19, y + 4, 2, 2); ctx.fillRect(x - 15, y + 4, 2, 2);
     }
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.ellipse(x, y + 4, 10, 7, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillRect(x + 3, y - 12, 5, 14);
+    ctx.beginPath(); ctx.arc(x + 6, y - 13, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = '#e67e22'; ctx.fillRect(x + 9, y - 14, 6, 3);
 
-    ctx.fillStyle = loc === 'water' ? '#74b9ff' : '#fab1a0'; ctx.fillRect(0, 0, c.width, 45);
-    ctx.fillStyle = '#000'; ctx.font = 'bold 12px monospace'; ctx.fillText("ВЫТЯНИТЕ РЫБУ СЮДА НА ПОВЕРХНОСТЬ", c.width / 2 - 130, 28);
+    ctx.fillStyle = '#ffffff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
+    ctx.fillText(nick, x, y - 24);
+  }
 
-    ctx.strokeStyle = tension > 70 ? '#ff4757' : '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(hookX, 0); ctx.lineTo(hookX, hookY); ctx.stroke();
-    ctx.strokeStyle = '#dfe4ea'; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(hookX - 6, hookY, 8, 0, Math.PI, false); ctx.stroke();
-
-    underwaterFishes.forEach(f => {
-      if (f === hookedFish) { f.x = hookX; f.y = hookY + 10; hookY = Math.min(c.height - 40, hookY + 0.7); tension = Math.max(0, tension - 0.35); }
-      else { f.x += f.vx; if (f.x < -120) f.x = c.width + 100; if (f.x > c.width + 120) f.x = -100; }
-
-      ctx.save();
-      if (f.isTransparent) ctx.globalAlpha = 0.45;
-      ctx.fillStyle = f.col;
-      ctx.fillRect(f.x - f.sz / 2, f.y - f.sz / 4, f.sz, f.sz / 2);
-      ctx.fillRect(f.x - f.sz / 6, f.y - f.sz / 2, f.sz / 3, f.sz / 4);
-      const tailX = f.vx > 0 ? f.x - f.sz / 2 - 10 : f.x + f.sz / 2;
-      ctx.fillRect(tailX, f.y - f.sz / 4, 10, f.sz / 2);
-      ctx.fillStyle = '#000';
-      const eyeX = f.vx > 0 ? f.x + f.sz / 4 : f.x - f.sz / 4 - 4;
-      ctx.fillRect(eyeX, f.y - 4, 4, 4);
-      if (f.fourEyes) ctx.fillRect(eyeX - 6, f.y - 4, 4, 4);
-      ctx.restore();
-
-      if (Math.hypot(f.x - hookX, f.y - hookY) < 95) {
-        ctx.fillStyle = 'gold'; ctx.font = 'bold 11px monospace'; ctx.textAlign = 'center';
-        ctx.fillText(`${f.data.name} (${f.data.chance})`, f.x, f.y - f.sz / 2 - 8); ctx.textAlign = 'left';
+  function renderLoop() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (let gx = 0; gx < 20; gx++) {
+      for (let gy = 0; gy < 20; gy++) {
+        const tile = worldData.tiles[`${gx},${gy}`];
+        if (tile) drawIsoTile(gx, gy, tile);
       }
+    }
+    Object.values(players).forEach(p => {
+      if (p.nick !== myNick) drawGooseAndOctopus(p.x, p.y, p.nick, '#ecf0f1', p.hasOctopus);
     });
-
-    if (hookedFish) {
-      ctx.fillStyle = '#111'; ctx.fillRect(c.width / 2 - 100, 55, 200, 14);
-      ctx.fillStyle = tension > 75 ? '#ff4757' : '#2ecc71'; ctx.fillRect(c.width / 2 - 100, 55, 200 * (tension / 100), 14);
-      ctx.fillStyle = '#fff'; ctx.font = '11px monospace'; ctx.fillText("Натяжение лески", c.width / 2 - 50, 66);
-
-      if (tension >= 100) { notify(`Леска порвалась! Рыба (${hookedFish.data.weight} кг) слишком тяжелая.`, "#ff4757"); state = 'idle'; }
-      else if (hookY <= 45) {
-        const caught = hookedFish.data; prof.inventory.push(caught); prof.xp += caught.xp; save();
-        notify(`Улов: [${caught.mut}] ${caught.name} (${caught.weight} кг) | Шанс: ${caught.chance}`, "#2ecc71"); state = 'idle';
-      }
-    }
+    if (myNick) drawGooseAndOctopus(myPos.x, myPos.y, myNick, gooseColor, stats.hasOctopus);
+    requestAnimationFrame(renderLoop);
   }
-  requestAnimationFrame(loop);
-}
-
-function drawChar(x, y, nick, own, lvl) {
-  ctx.fillStyle = own ? '#f1c40f' : '#27ae60'; ctx.fillRect(x + 2, y - 4, 24, 4); ctx.fillRect(x + 6, y - 9, 16, 5);
-  ctx.fillStyle = '#ffcccc'; ctx.fillRect(x + 6, y, 16, 14); ctx.fillStyle = '#000'; ctx.fillRect(x + 16, y + 4, 3, 3);
-  ctx.fillStyle = own ? '#e67e22' : '#2980b9'; ctx.fillRect(x + 4, y + 14, 20, 18); ctx.fillStyle = '#2c3e50'; ctx.fillRect(x + 6, y + 32, 16, 12);
-  ctx.strokeStyle = '#d35400'; ctx.lineWidth = 2.5; ctx.beginPath(); ctx.moveTo(x + 20, y + 20); ctx.lineTo(x + 36, y + 4); ctx.stroke();
-  ctx.font = 'bold 12px monospace'; ctx.textAlign = 'center'; ctx.fillStyle = own ? 'gold' : '#fff';
-  ctx.fillText(own ? `[OWNER] ${nick} (${lvl})` : `${nick} (${lvl})`, x + 14, y - 14); ctx.textAlign = 'left';
-}
-function openWin(id) { const el = document.getElementById(id); el.classList.toggle('hidden'); if (id === 'inv-win' && !el.classList.contains('hidden')) renderInv(); }
-function renderInv() {
-  const r = prof.rod; document.getElementById('rod-txt').innerText = `Основание:${r.base} | Леска:${r.line} (до ${r.line*15}кг) | Моток:${r.reel} | Приманка:${r.lure} | Поплавок:${r.bobber}`;
-  const l = document.getElementById('inv-list'); l.innerHTML = prof.inventory.length === 0 ? '<p style="color:#aaa; font-size:12px;">Рюкзак пуст</p>' : '';
-  prof.inventory.forEach((f, i) => l.innerHTML += `<div class="card"><span>[${f.mut}] ${f.name} (${f.weight}кг) ${f.chance}</span><button class="s-btn" onclick="toEnd(${i})">В сундук</button></div>`);
-}
-function toEnd(i) { prof.enderChest.push(prof.inventory.splice(i, 1)); save(); renderInv(); }
-function renderEnd() {
-  const l = document.getElementById('end-list'); l.innerHTML = prof.enderChest.length === 0 ? '<p style="color:#aaa; font-size:12px;">Сундук пуст</p>' : '';
-  prof.enderChest.forEach((f, i) => l.innerHTML += `<div class="card"><span>[${f.mut}] ${f.name} (${f.weight}кг)</span><button class="s-btn" onclick="fromEnd(${i})">Забрать</button></div>`);
-}
-function fromEnd(i) { prof.inventory.push(prof.enderChest.splice(i, 1)); save(); renderEnd(); }
-requestAnimationFrame(loop);
 </script>
 </body>
 </html>
